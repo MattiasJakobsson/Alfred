@@ -1,5 +1,5 @@
-from components.entertainment.chromecast.chromecast_api import ChromeCastApi
+from components.entertainment.marantz_amp.amplifier_api import AmplifierApi
 
-device = ChromeCastApi().find_device('Tv')
+device = AmplifierApi().find_amp('00:06:78:23:72:2E')
 
-print(device)
+device.power()
