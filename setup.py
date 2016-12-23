@@ -10,7 +10,7 @@ with open('LICENSE') as f:
     licenseContent = f.read()
 
 setup(
-    name='homie',
+    name='alfred',
     version='0.0.1',
     description='Home automation robot',
     long_description=readmeContent,
