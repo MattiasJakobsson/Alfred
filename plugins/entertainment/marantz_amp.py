@@ -6,20 +6,8 @@ def get_name():
     return 'Marantz amplifier'
 
 
-def get_default_settings():
-    return {'ip_address': ''}
-
-
-def get_available_commands():
-    return {'power': {}}
-
-
-def get_available_queries():
-    return {}
-
-
-def create(settings):
-    return MarantzAmp(settings)
+def get_type():
+    return MarantzAmp
 
 
 class MarantzAmp:
@@ -44,7 +32,7 @@ class MarantzAmp:
 
         return {'power': power}
 
-    def power(self):
+    def power_command(self):
         status = self._get_status()
 
         if status['power']:

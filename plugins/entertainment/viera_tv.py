@@ -5,20 +5,8 @@ def get_name():
     return 'Viera TV'
 
 
-def get_default_settings():
-    return {'ip_address': ''}
-
-
-def get_available_commands():
-    return {'power': {}}
-
-
-def get_available_queries():
-    return {}
-
-
-def create(settings):
-    return VieraTv(settings)
+def get_type():
+    return VieraTv
 
 
 class VieraTv:
@@ -46,5 +34,5 @@ class VieraTv:
 
         requests.post('http://%s:55000/nrc/control_0' % self.ip, data=body, headers=headers)
 
-    def power(self):
+    def power_command(self):
         self._send_request('<X_KeyEvent>NRC_POWER-ONOFF</X_KeyEvent>')

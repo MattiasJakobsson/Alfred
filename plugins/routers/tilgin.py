@@ -6,20 +6,8 @@ def get_name():
     return 'Tilgin router'
 
 
-def get_default_settings():
-    return {'login_user': '', 'login_password': ''}
-
-
-def get_available_commands():
-    return {}
-
-
-def get_available_queries():
-    return {'active_devices': {}, 'ip_for_mac': {}}
-
-
-def create(settings):
-    return TilginRouter(settings)
+def get_type():
+    return TilginRouter
 
 
 class TilginRouter:
@@ -34,7 +22,7 @@ class TilginRouter:
 
         self.cookies = response.cookies
 
-    def active_devices(self):
+    def active_devices_query(self):
         response = requests.get('http://192.168.1.1/status/lan_clients/', cookies=self.cookies)
 
         soup = BeautifulSoup(response.text, 'lxml')
@@ -51,8 +39,8 @@ class TilginRouter:
 
         return result
 
-    def ip_for_mac(self, mac_address):
-        devices = self.active_devices()
+    def ip_for_mac_query(self, mac_address):
+        devices = self.active_devices_query()
 
         items = [item for item in devices if 'mac' in item and item['mac'] == mac_address]
 
