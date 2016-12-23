@@ -1,24 +1,29 @@
 import requests
-from components.routers.tilgin.router_api import RouterApi
 
 
-class TvApi:
-    def __init__(self):
-        self.router_api = RouterApi()
-
-    def find_tv(self, mac_address):
-        devices = self.router_api.get_connected_devices()
-
-        items = [item for item in devices if 'mac' in item and item['mac'] == mac_address]
-
-        ip = items[0]['ip']
-
-        return Viera(ip)
+def get_name():
+    return 'Viera TV'
 
 
-class Viera:
-    def __init__(self, ip):
-        self.ip = ip
+def get_default_settings():
+    return {'ip_address': ''}
+
+
+def get_available_commands():
+    return {'power': {}}
+
+
+def get_available_queries():
+    return {}
+
+
+def create(settings):
+    return VieraTv(settings)
+
+
+class VieraTv:
+    def __init__(self, settings):
+        self.ip = settings['ip_address']
 
     def _send_request(self, command):
         body = (

@@ -1,25 +1,30 @@
 import requests
 import xml.etree.ElementTree as ET
-from components.routers.tilgin.router_api import RouterApi
 
 
-class AmplifierApi:
-    def __init__(self):
-        self.router_api = RouterApi()
-
-    def find_amp(self, mac_address):
-        devices = self.router_api.get_connected_devices()
-
-        items = [item for item in devices if 'mac' in item and item['mac'] == mac_address]
-
-        ip = items[0]['ip']
-
-        return Marantz(ip)
+def get_name():
+    return 'Marantz amplifier'
 
 
-class Marantz:
-    def __init__(self, ip):
-        self.ip = ip
+def get_default_settings():
+    return {'ip_address': ''}
+
+
+def get_available_commands():
+    return {'power': {}}
+
+
+def get_available_queries():
+    return {}
+
+
+def create(settings):
+    return MarantzAmp(settings)
+
+
+class MarantzAmp:
+    def __init__(self, settings):
+        self.ip = settings['ip_address']
 
     def _send_command(self, command):
         body = 'cmd0=%s' % command
@@ -41,8 +46,6 @@ class Marantz:
 
     def power(self):
         status = self._get_status()
-
-        print(status)
 
         if status['power']:
             self._send_command('PutZone_OnOff/OFF')
