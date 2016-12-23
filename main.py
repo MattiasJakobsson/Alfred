@@ -1,5 +1,5 @@
-from components.entertainment.viera_tv.tv_api import TvApi
+from components.entertainment.chromecast.chromecast_api import ChromeCastApi
 
-tv = TvApi().find_tv('BC:30:7E:B9:6C:AB')
+device = ChromeCastApi().find_device('Tv')
 
-tv.power()
+print(device)
