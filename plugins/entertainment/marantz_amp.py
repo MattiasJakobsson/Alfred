@@ -1,9 +1,9 @@
 import requests
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 
 
-def get_name():
-    return 'Marantz amplifier'
+def get_available_settings():
+    return ['ip_address']
 
 
 def get_type():
@@ -11,8 +11,9 @@ def get_type():
 
 
 class MarantzAmp:
-    def __init__(self, settings):
-        self.ip = settings['ip_address']
+    def __init__(self, plugin_id, settings_manager):
+        self.plugin_id = plugin_id
+        self.settings_manager = settings_manager
 
     def _send_command(self, command):
         body = 'cmd0=%s' % command
@@ -21,18 +22,20 @@ class MarantzAmp:
             'Content-Type': 'text/html'
         }
 
-        requests.post('http://%s/MainZone/index.put.asp' % self.ip, data=body, headers=headers)
+        requests.post('http://%s/MainZone/index.put.asp' %
+                      self.settings_manager.get_setting(self.plugin_id, 'ip_address'), data=body, headers=headers)
 
     def _get_status(self):
-        response = requests.get('http://%s/goform/formMainZone_MainZoneXml.xml' % self.ip)
+        response = requests.get('http://%s/goform/formMainZone_MainZoneXml.xml' %
+                                self.settings_manager.get_setting(self.plugin_id, 'ip_address'))
 
-        root = ET.fromstring(response.content)
+        root = ElementTree.fromstring(response.content)
 
         power = root.find('Power').find('value').text == 'ON'
 
         return {'power': power}
 
-    def power_command(self):
+    def toggle_power(self):
         status = self._get_status()
 
         if status['power']:

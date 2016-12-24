@@ -1,9 +1,5 @@
-def get_name():
-    return 'Chromecast'
-
-
-def get_default_settings():
-    return {'name': ''}
+def get_available_settings():
+    return ['name']
 
 
 def get_type():
@@ -11,5 +7,6 @@ def get_type():
 
 
 class ChromecastDevice:
-    def __init__(self, settings):
-        self.name = settings['name']
+    def __init__(self, plugin_id, settings_manager):
+        self.plugin_id = plugin_id
+        self.settings_manager = settings_manager
