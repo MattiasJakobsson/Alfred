@@ -5,3 +5,4 @@ feedparser
 waitress
 bs4
 pychromecast
+tinydb
