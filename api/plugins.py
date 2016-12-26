@@ -7,20 +7,29 @@ def bootstrap(application):
     plugin_list = PluginList()
     plugin_command = PluginCommand()
     plugin_query = PluginQuery()
+    available_plugins = AvailablePlugins()
 
     application.add_route('/plugins', plugin_list)
     application.add_route('/plugins/{id}/commands/{command}', plugin_command)
     application.add_route('/plugins/{id}/queries/{query}', plugin_query)
+    application.add_route('/plugins/available', available_plugins)
+
+
+class AvailablePlugins:
+    def on_get(self, resp):
+        plugins = get_available_plugins()
+
+        resp.body = json.dumps(plugins)
 
 
 class PluginList:
     def __init__(self):
         self.db_manager = DatabaseManager()
 
-    def on_get(self, req, resp):
-        plugins = get_available_plugins()
+    def on_get(self, resp):
+        result = self.db_manager.get_all('plugins')
 
-        resp.body = json.dumps(plugins)
+        resp.body = json.dumps(result)
 
     def on_post(self, req, resp):
         data = req.bounded_stream.read().decode()

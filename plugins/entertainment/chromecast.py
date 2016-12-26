@@ -7,6 +7,5 @@ def get_type():
 
 
 class ChromecastDevice:
-    def __init__(self, plugin_id, settings_manager):
-        self.plugin_id = plugin_id
+    def __init__(self, settings_manager):
         self.settings_manager = settings_manager

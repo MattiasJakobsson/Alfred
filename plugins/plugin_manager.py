@@ -4,6 +4,7 @@ from os.path import dirname, basename, isfile
 import glob
 from os.path import relpath
 from data_access.database_manager import DatabaseManager
+from plugins.parameter_handler import run_python_code
 
 
 def get_available_commands(cls):
@@ -35,7 +36,7 @@ def get_available_plugins():
 
         module = importlib.import_module(name, package='plugins')
 
-        settings = module.get_available_settings() if module.get_available_settings is not None else []
+        settings = module.get_available_settings() if hasattr(module, 'get_available_settings') else []
         plugin_type = module.get_type()
 
         result.append({'name': name, 'settings': settings, 'commands': get_available_commands(plugin_type),
@@ -50,18 +51,16 @@ def boostrap():
     for plugin in plugins:
         module = importlib.import_module(plugin['name'], package='plugins')
 
-        bootstrap = module.bootstrap
-
-        if bootstrap is not None:
-            bootstrap(plugin)
+        if hasattr(module, 'bootstrap'):
+            module.bootstrap(plugin)
 
 
 def _get_plugin_instance(plugin_id):
     plugin = DatabaseManager().get_by_id('plugins', plugin_id)
 
-    module = importlib.import_module(plugin.name, package='plugins')
+    module = importlib.import_module(plugin['name'], package='plugins')
 
-    return module.get_type()(plugin_id, SettingsManager({}))
+    return module.get_type()(SettingsManager(plugin['settings']))
 
 
 def execute_command(plugin_id, command):
@@ -80,5 +79,6 @@ class SettingsManager:
     def __init__(self, settings):
         self.settings = settings
 
-    def get_setting(self, plugin_id, setting):
-        return self.settings[plugin_id][setting]
+    def get_setting(self, setting):
+        return run_python_code(self.settings[setting], local_dict={'get_plugin': _get_plugin_instance,
+                                                                   'query': get_query_result})

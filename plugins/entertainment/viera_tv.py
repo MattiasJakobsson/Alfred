@@ -10,8 +10,7 @@ def get_type():
 
 
 class VieraTv:
-    def __init__(self, plugin_id, settings_manager):
-        self.plugin_id = plugin_id
+    def __init__(self, settings_manager):
         self.settings_manager = settings_manager
 
     def _send_request(self, command):
@@ -33,7 +32,7 @@ class VieraTv:
             'SOAPACTION': '"urn:panasonic-com:service:p00NetworkControl:1#X_SendKey"'
         }
 
-        ip = self.settings_manager.get_setting(self.plugin_id, 'ip_address')
+        ip = self.settings_manager.get_setting('ip_address')
 
         requests.post('http://%s:55000/nrc/control_0' % ip, data=body, headers=headers)
 

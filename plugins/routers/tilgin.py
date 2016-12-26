@@ -11,18 +11,22 @@ def get_type():
 
 
 class TilginRouter:
-    def __init__(self, plugin_id, settings_manager):
-        self.plugin_id = plugin_id
+    def __init__(self, settings_manager):
         self.settings_manager = settings_manager
 
     def _sign_in(self):
-        login_user = self.settings_manager.get_setting(self.plugin_id, 'login_user')
-        login_password = self.settings_manager.get_setting(self.plugin_id, 'login_password')
+        if self.cookies is not None:
+            return self.cookies
+
+        login_user = self.settings_manager.get_setting('login_user')
+        login_password = self.settings_manager.get_setting('login_password')
 
         payload = {'__formtok': '', '__user': login_user, '__auth': 'login',
                    '__pass': login_password}
 
         response = requests.post('http://192.168.1.1/', data=payload)
+
+        self.cookies = response.cookies
 
         return response.cookies
 

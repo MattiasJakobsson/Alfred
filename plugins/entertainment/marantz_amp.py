@@ -11,8 +11,7 @@ def get_type():
 
 
 class MarantzAmp:
-    def __init__(self, plugin_id, settings_manager):
-        self.plugin_id = plugin_id
+    def __init__(self, settings_manager):
         self.settings_manager = settings_manager
 
     def _send_command(self, command):
@@ -23,11 +22,11 @@ class MarantzAmp:
         }
 
         requests.post('http://%s/MainZone/index.put.asp' %
-                      self.settings_manager.get_setting(self.plugin_id, 'ip_address'), data=body, headers=headers)
+                      self.settings_manager.get_setting('ip_address'), data=body, headers=headers)
 
     def _get_status(self):
         response = requests.get('http://%s/goform/formMainZone_MainZoneXml.xml' %
-                                self.settings_manager.get_setting(self.plugin_id, 'ip_address'))
+                                self.settings_manager.get_setting('ip_address'))
 
         root = ElementTree.fromstring(response.content)
 
