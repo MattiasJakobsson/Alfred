@@ -21,9 +21,8 @@ class TilginRouter:
 
         payload = {'__formtok': '', '__user': login_user, '__auth': 'login',
                    '__pass': login_password}
-        url = 'http://192.168.1.1/'
 
-        response = requests.post(url, data=payload)
+        response = requests.post('http://192.168.1.1/', data=payload)
 
         return response.cookies
 

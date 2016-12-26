@@ -1,16 +1,10 @@
 import falcon
-from waitress import serve
+from .plugins import bootstrap
 
-from .registration import Registration
-from .plugins import PluginList
 
-api = application = falcon.API()
+def configure():
+    api = falcon.API()
 
-plugin_list = PluginList()
+    bootstrap(api)
 
-api.add_route('/plugins', plugin_list)
-
-registration = Registration()
-api.add_route('/registration', registration)
-
-serve(api, listen='*:8000')
+    return api

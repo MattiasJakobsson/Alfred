@@ -1,6 +1,16 @@
-from plugins.plugin_manager import get_available_plugins
+from plugins.plugin_manager import get_available_plugins, execute_command, get_query_result
 import json
 from data_access.database_manager import DatabaseManager
+
+
+def bootstrap(application):
+    plugin_list = PluginList()
+    plugin_command = PluginCommand()
+    plugin_query = PluginQuery()
+
+    application.add_route('/plugins', plugin_list)
+    application.add_route('/plugins/{id}/commands/{command}', plugin_command)
+    application.add_route('/plugins/{id}/queries/{query}', plugin_query)
 
 
 class PluginList:
@@ -13,8 +23,28 @@ class PluginList:
         resp.body = json.dumps(plugins)
 
     def on_post(self, req, resp):
-        data = json.load(req.bounded_stream)
+        data = req.bounded_stream.read().decode()
 
-        self.db_manager.insert('plugins', data)
+        result = self.db_manager.insert('plugins', json.loads(data))
 
-        resp.body = 'Added'
+        resp.body = str(result)
+
+
+class PluginCommand:
+    def on_post(self, req, resp):
+        plugin_id = req.params['id']
+        command = req.params['command']
+
+        execute_command(plugin_id, command)
+
+        resp.body = 'Success'
+
+
+class PluginQuery:
+    def on_get(self, req, resp):
+        plugin_id = req.params['id']
+        query = req.params['query']
+
+        result = get_query_result(plugin_id, query)
+
+        resp.body = json.dumps(result)

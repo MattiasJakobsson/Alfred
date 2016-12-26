@@ -1,13 +1,21 @@
 from tinydb import TinyDB
-from tinydb.storages import JSONStorage
-from tinydb.middlewares import CachingMiddleware
 
 
 class DatabaseManager:
     def __init__(self):
-        self.db = TinyDB('~/db.json', storage=CachingMiddleware(JSONStorage))
+        self.db = TinyDB('c:/temp/db.json')
 
     def insert(self, category, data):
         table = self.db.table(category)
 
-        table.insert(data)
+        return table.insert(data)
+
+    def get_all(self, category):
+        table = self.db.table(category)
+
+        return table.all()
+
+    def get_by_id(self, category, eid):
+        table = self.db.table(category)
+
+        return table.get(eid=eid)
