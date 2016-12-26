@@ -16,7 +16,7 @@ def bootstrap(application):
 
 
 class AvailablePlugins:
-    def on_get(self, resp):
+    def on_get(self, req, resp):
         plugins = get_available_plugins()
 
         resp.body = json.dumps(plugins)
@@ -26,7 +26,7 @@ class PluginList:
     def __init__(self):
         self.db_manager = DatabaseManager()
 
-    def on_get(self, resp):
+    def on_get(self, req, resp):
         result = self.db_manager.get_all('plugins')
 
         resp.body = json.dumps(result)
@@ -34,7 +34,15 @@ class PluginList:
     def on_post(self, req, resp):
         data = req.bounded_stream.read().decode()
 
-        result = self.db_manager.insert('plugins', json.loads(data))
+        plugin_data = json.loads(data)
+
+        plugin = {
+            'type': plugin_data['type'],
+            'settings': plugin_data['settings'] if 'settings' in plugin_data else {},
+            'title': plugin_data['title']
+        }
+
+        result = self.db_manager.insert('plugins', plugin)
 
         resp.body = str(result)
 

@@ -7,13 +7,19 @@ from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
 
 
+database_manager = DatabaseManager()
+
+
 def get_available_commands(cls):
-    return [item[0] for item in inspect.getmembers(cls) if not item[0].startswith('get_')
-            and not item[0].startswith('_')]
+    return [(item[0], [p for p in list(inspect.signature(item[1]).parameters) if not p == 'self'])
+            for item in inspect.getmembers(cls)
+            if not item[0].startswith('get_') and not item[0].startswith('_')]
 
 
 def get_available_queries(cls):
-    return [item[0] for item in inspect.getmembers(cls) if item[0].startswith('get_')]
+    return [(item[0], [p for p in list(inspect.signature(item[1]).parameters) if not p == 'self'])
+            for item in inspect.getmembers(cls)
+            if item[0].startswith('get_')]
 
 
 def get_available_plugins():
@@ -39,26 +45,26 @@ def get_available_plugins():
         settings = module.get_available_settings() if hasattr(module, 'get_available_settings') else []
         plugin_type = module.get_type()
 
-        result.append({'name': name, 'settings': settings, 'commands': get_available_commands(plugin_type),
+        result.append({'type': name, 'settings': settings, 'commands': get_available_commands(plugin_type),
                        'queries': get_available_queries(plugin_type)})
 
     return result
 
 
 def boostrap():
-    plugins = DatabaseManager().get_all('plugins')
+    plugins = database_manager.get_all('plugins')
 
     for plugin in plugins:
-        module = importlib.import_module(plugin['name'], package='plugins')
+        module = importlib.import_module(plugin['type'], package='plugins')
 
         if hasattr(module, 'bootstrap'):
             module.bootstrap(plugin)
 
 
 def _get_plugin_instance(plugin_id):
-    plugin = DatabaseManager().get_by_id('plugins', plugin_id)
+    plugin = database_manager.get_by_id('plugins', plugin_id)
 
-    module = importlib.import_module(plugin['name'], package='plugins')
+    module = importlib.import_module(plugin['type'], package='plugins')
 
     return module.get_type()(SettingsManager(plugin['settings']))
 
