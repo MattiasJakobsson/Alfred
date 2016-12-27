@@ -1,4 +1,5 @@
 import requests
+from xml.etree import ElementTree
 
 
 def get_available_settings():
@@ -73,3 +74,25 @@ class VieraTv:
 
     def mute(self):
         self._send_request('NRC_MUTE-ONOFF')
+
+    def get_volume(self):
+        try:
+            response = self._get_response('GetVolume')
+
+            response.raise_for_status()
+
+            root = ElementTree.fromstring(response.content)
+
+            return root.find('.//CurrentVolume').text
+        except:
+            return ''
+
+    def get_power_status(self):
+        try:
+            response = self._get_response('GetVolume')
+
+            response.raise_for_status()
+
+            return True
+        except:
+            return False

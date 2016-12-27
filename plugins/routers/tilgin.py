@@ -86,7 +86,7 @@ class TilginRouter:
         timer.start()
 
     def get_active_devices(self):
-        return self.cache.get(key='active_devices', createfunc=self._get_active_devices)
+        return self.db_manager.get_all('tilgin_devices')
 
     def get_ip_from_mac(self, mac_address):
         devices = self.get_active_devices()

@@ -50,3 +50,8 @@ class MarantzAmp:
             self._send_command('PutVolumeMute/OFF')
         else:
             self._send_command('PutVolumeMute/ON')
+
+    def get_power_status(self):
+        status = self._get_status()
+
+        return status['power']
