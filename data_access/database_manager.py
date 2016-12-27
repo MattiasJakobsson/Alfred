@@ -10,6 +10,11 @@ class DatabaseManager:
 
         return table.insert(data)
 
+    def delete(self, category, eid):
+        table = self.db.table(category)
+
+        table.remove(eids=[eid])
+
     def get_all(self, category):
         table = self.db.table(category)
 

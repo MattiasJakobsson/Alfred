@@ -6,3 +6,4 @@ waitress
 bs4
 pychromecast
 tinydb
+beaker

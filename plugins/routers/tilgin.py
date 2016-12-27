@@ -1,5 +1,10 @@
-from bs4 import BeautifulSoup
+import threading
+
 import requests
+from bs4 import BeautifulSoup
+
+from data_access.cache_manager import cache
+from data_access.database_manager import DatabaseManager
 
 
 def get_available_settings():
@@ -13,11 +18,10 @@ def get_type():
 class TilginRouter:
     def __init__(self, settings_manager):
         self.settings_manager = settings_manager
+        self.cache = cache.get_cache('tilgin_router', expire=300)
+        self.db_manager = DatabaseManager()
 
-    def _sign_in(self):
-        if self.cookies is not None:
-            return self.cookies
-
+    def _get_api_cookies(self):
         login_user = self.settings_manager.get_setting('login_user')
         login_password = self.settings_manager.get_setting('login_password')
 
@@ -30,7 +34,10 @@ class TilginRouter:
 
         return response.cookies
 
-    def get_active_devices(self):
+    def _sign_in(self):
+        return self.cache.get(key='cookies', createfunc=self._get_api_cookies)
+
+    def _get_active_devices(self):
         cookies = self._sign_in()
 
         response = requests.get('http://192.168.1.1/status/lan_clients/', cookies=cookies)
@@ -48,6 +55,38 @@ class TilginRouter:
                                'type': columns[3].text, 'media': columns[4].text})
 
         return result
+
+    def bootstrap(self):
+        def send_updates():
+            active_devices = self._get_active_devices()
+            current_devices = self.db_manager.get_all('tilgin_devices')
+
+            new_devices = [item for item in active_devices if item['mac']
+                           not in [dev['mac'] for dev in current_devices]]
+
+            removed_devices = [item for item in current_devices if item['mac']
+                               not in [dev['mac'] for dev in active_devices]]
+
+            for device in new_devices:
+                print('New device: %s' % device['mac'])
+
+                self.db_manager.insert('tilgin_devices', device)
+
+            for device in removed_devices:
+                print('Removed device: %s' % device['mac'])
+
+                self.db_manager.delete('tilgin_devices', device.eid)
+
+            inner_timer = threading.Timer(10, send_updates)
+
+            inner_timer.start()
+
+        timer = threading.Timer(0, send_updates)
+
+        timer.start()
+
+    def get_active_devices(self):
+        return self.cache.get(key='active_devices', createfunc=self._get_active_devices)
 
     def get_ip_from_mac(self, mac_address):
         devices = self.get_active_devices()

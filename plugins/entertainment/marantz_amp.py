@@ -31,8 +31,9 @@ class MarantzAmp:
         root = ElementTree.fromstring(response.content)
 
         power = root.find('Power').find('value').text == 'ON'
+        muted = root.find('Mute').find('value').text == 'ON'
 
-        return {'power': power}
+        return {'power': power, 'muted': muted}
 
     def toggle_power(self):
         status = self._get_status()
@@ -41,3 +42,11 @@ class MarantzAmp:
             self._send_command('PutZone_OnOff/OFF')
         else:
             self._send_command('PutZone_OnOff/ON')
+
+    def toggle_muted(self):
+        status = self._get_status()
+
+        if status['muted']:
+            self._send_command('PutVolumeMute/OFF')
+        else:
+            self._send_command('PutVolumeMute/ON')

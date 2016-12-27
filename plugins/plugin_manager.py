@@ -11,13 +11,13 @@ database_manager = DatabaseManager()
 
 
 def get_available_commands(cls):
-    return [(item[0], [p for p in list(inspect.signature(item[1]).parameters) if not p == 'self'])
+    return [{'command': item[0], 'parameters': [p for p in list(inspect.signature(item[1]).parameters) if p != 'self']}
             for item in inspect.getmembers(cls)
-            if not item[0].startswith('get_') and not item[0].startswith('_')]
+            if not item[0].startswith('get_') and not item[0].startswith('_') and not item[0] == 'bootstrap']
 
 
 def get_available_queries(cls):
-    return [(item[0], [p for p in list(inspect.signature(item[1]).parameters) if not p == 'self'])
+    return [{'query': item[0], 'parameters': [p for p in list(inspect.signature(item[1]).parameters) if p != 'self']}
             for item in inspect.getmembers(cls)
             if item[0].startswith('get_')]
 
@@ -51,14 +51,41 @@ def get_available_plugins():
     return result
 
 
+def build_plugin_data(plugin):
+    module = importlib.import_module(plugin['type'], package='plugins')
+
+    plugin_type = module.get_type()
+
+    return {
+        'id': plugin.eid,
+        'title': plugin['title'],
+        'settings': plugin['settings'],
+        'availableCommands': get_available_commands(plugin_type),
+        'availableQueries': get_available_queries(plugin_type)
+    }
+
+
+def teardown_plugin(plugin):
+    module = importlib.import_module(plugin['type'], package='plugins')
+
+    if hasattr(module, 'teardown'):
+        module.teardown(plugin)
+
+
+def bootstrap_plugin(plugin):
+    module = importlib.import_module(plugin['type'], package='plugins')
+
+    instance = module.get_type()(SettingsManager(plugin['settings']))
+
+    if hasattr(instance, 'bootstrap'):
+        instance.bootstrap()
+
+
 def boostrap():
     plugins = database_manager.get_all('plugins')
 
     for plugin in plugins:
-        module = importlib.import_module(plugin['type'], package='plugins')
-
-        if hasattr(module, 'bootstrap'):
-            module.bootstrap(plugin)
+        bootstrap_plugin(plugin)
 
 
 def _get_plugin_instance(plugin_id):
@@ -69,16 +96,26 @@ def _get_plugin_instance(plugin_id):
     return module.get_type()(SettingsManager(plugin['settings']))
 
 
-def execute_command(plugin_id, command):
+def execute_command(plugin_id, command, parameters):
     plugin_instance = _get_plugin_instance(plugin_id)
 
-    getattr(plugin_instance, command)()
+    method = getattr(plugin_instance, command)
+
+    arguments = [parameters[p] if p in parameters else None
+                 for p in list(inspect.signature(method).parameters) if p != 'self']
+
+    method(*arguments)
 
 
-def get_query_result(plugin_id, query):
+def get_query_result(plugin_id, query, parameters):
     plugin_instance = _get_plugin_instance(plugin_id)
 
-    return getattr(plugin_instance, query)()
+    method = getattr(plugin_instance, query)
+
+    arguments = [parameters[p] if p in parameters else None
+                 for p in list(inspect.signature(method).parameters) if p != 'self']
+
+    return method(*arguments)
 
 
 class SettingsManager:
