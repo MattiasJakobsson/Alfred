@@ -4,6 +4,7 @@ from automation.scheduler import add_job
 
 from data_access.cache_manager import cache
 from data_access.database_manager import DatabaseManager
+from automation.event_publisher import publish_event
 
 
 def get_available_settings():
@@ -67,12 +68,12 @@ class TilginRouter:
                                not in [dev['mac'] for dev in active_devices]]
 
             for device in new_devices:
-                print('New device: %s' % device['mac'])
+                publish_event('tilginrouter', 'DeviceSignedOn', device)
 
                 self.db_manager.insert('tilgin_devices', device)
 
             for device in removed_devices:
-                print('Removed device: %s' % device['mac'])
+                publish_event('tilginrouter', 'DeviceSignedOff', device)
 
                 self.db_manager.delete('tilgin_devices', device.eid)
 

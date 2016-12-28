@@ -2,6 +2,7 @@ import requests
 from xml.etree import ElementTree
 from automation.scheduler import add_job
 from data_access.database_manager import DatabaseManager
+from automation.event_publisher import publish_event
 
 
 def get_available_settings():
@@ -48,17 +49,17 @@ class MarantzAmp:
                 current_states['power'] = active_states['power']
 
                 if current_states['power']:
-                    print('Marantz started!')
+                    publish_event('marantzamp', 'MarantzAmpTurnedOn', {})
                 else:
-                    print('Marantz shut down!')
+                    publish_event('marantzamp', 'MarantzAmpTurnedOff', {})
 
             if active_states['muted'] != current_states['muted']:
                 current_states['muted'] = active_states['muted']
 
                 if current_states['muted']:
-                    print('Marantz muted!')
+                    publish_event('marantzamp', 'MarantzAmpMuted', {})
                 else:
-                    print('Marantz un muted!')
+                    publish_event('marantzamp', 'MarantzAmpUnMuted', {})
 
         add_job(send_updates, 'interval', seconds=10)
 

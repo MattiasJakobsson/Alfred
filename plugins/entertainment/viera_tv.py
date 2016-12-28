@@ -1,6 +1,7 @@
 import requests
 from xml.etree import ElementTree
 from automation.scheduler import add_job
+from automation.event_publisher import publish_event
 
 
 def get_available_settings():
@@ -71,19 +72,28 @@ class VieraTv:
                 current_states['power'] = active_states['power']
 
                 if current_states['power']:
-                    print('Viera started!')
+                    publish_event('vieratv', 'TvTurnedOn', {})
                 else:
-                    print('Viera shut down!')
+                    publish_event('vieratv', 'TvTurnedOff', {})
 
             if active_states['volume'] != current_states['volume']:
-                current_states['volume'] = active_states['volume']
+                if active_states['volume']:
+                    current_states['volume'] = active_states['volume']
 
-                print('Viera volume changed to %s' % current_states['volume'])
+                    publish_event('vieratv', 'VolumeChanged', {'newVolume': current_states['volume']})
 
         add_job(send_updates, 'interval', seconds=10)
 
     def toggle_power(self):
         self._send_request('NRC_POWER-ONOFF')
+
+    def power_on(self):
+        if not self.get_power_status():
+            self.toggle_power()
+
+    def power_off(self):
+        if self.get_power_status():
+            self.toggle_power()
 
     def switch_hdmi_input_to(self, hdmi):
         self._send_request('NRC_HDMI%s-ONOFF' % hdmi)
