@@ -87,3 +87,8 @@ class TilginRouter:
         items = [item for item in devices if 'mac' in item and item['mac'] == mac_address]
 
         return items[0]['ip']
+
+    def get_is_device_online(self, mac_address):
+        devices = self.get_active_devices()
+
+        return mac_address in [item['mac'] for item in devices]
