@@ -43,6 +43,12 @@ class MarantzAmp:
         else:
             self._send_command('PutZone_OnOff/ON')
 
+    def power_on(self):
+        self._send_command('PutZone_OnOff/ON')
+
+    def power_off(self):
+        self._send_command('PutZone_OnOff/OFF')
+
     def toggle_muted(self):
         status = self._get_status()
 
@@ -51,7 +57,18 @@ class MarantzAmp:
         else:
             self._send_command('PutVolumeMute/ON')
 
+    def muted_on(self):
+        self._send_command('PutVolumeMute/ON')
+
+    def muted_off(self):
+        self._send_command('PutVolumeMute/OFF')
+
     def get_power_status(self):
         status = self._get_status()
 
         return status['power']
+
+    def get_muted_status(self):
+        status = self._get_status()
+
+        return status['muted']

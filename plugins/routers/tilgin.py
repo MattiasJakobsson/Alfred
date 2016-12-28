@@ -1,7 +1,6 @@
-import threading
-
 import requests
 from bs4 import BeautifulSoup
+from automation.scheduler import add_job
 
 from data_access.cache_manager import cache
 from data_access.database_manager import DatabaseManager
@@ -77,13 +76,7 @@ class TilginRouter:
 
                 self.db_manager.delete('tilgin_devices', device.eid)
 
-            inner_timer = threading.Timer(10, send_updates)
-
-            inner_timer.start()
-
-        timer = threading.Timer(0, send_updates)
-
-        timer.start()
+        add_job(send_updates, 'interval', seconds=10)
 
     def get_active_devices(self):
         return self.db_manager.get_all('tilgin_devices')
