@@ -1,5 +1,7 @@
 import requests
 from xml.etree import ElementTree
+from automation.scheduler import add_job
+from data_access.database_manager import DatabaseManager
 
 
 def get_available_settings():
@@ -13,6 +15,7 @@ def get_type():
 class MarantzAmp:
     def __init__(self, settings_manager):
         self.settings_manager = settings_manager
+        self.db_manager = DatabaseManager()
 
     def _send_command(self, command):
         body = 'cmd0=%s' % command
@@ -34,6 +37,30 @@ class MarantzAmp:
         muted = root.find('Mute').find('value').text == 'ON'
 
         return {'power': power, 'muted': muted}
+
+    def bootstrap(self):
+        current_states = self._get_status()
+
+        def send_updates():
+            active_states = self._get_status()
+
+            if active_states['power'] != current_states['power']:
+                current_states['power'] = active_states['power']
+
+                if current_states['power']:
+                    print('Marantz started!')
+                else:
+                    print('Marantz shut down!')
+
+            if active_states['muted'] != current_states['muted']:
+                current_states['muted'] = active_states['muted']
+
+                if current_states['muted']:
+                    print('Marantz muted!')
+                else:
+                    print('Marantz un muted!')
+
+        add_job(send_updates, 'interval', seconds=10)
 
     def toggle_power(self):
         status = self._get_status()

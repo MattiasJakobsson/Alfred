@@ -1,5 +1,6 @@
 import requests
 from xml.etree import ElementTree
+from automation.scheduler import add_job
 
 
 def get_available_settings():
@@ -59,6 +60,27 @@ class VieraTv:
         ip = self.settings_manager.get_setting('ip_address')
 
         return requests.post('http://%s:55000/dmr/control_0' % ip, data=body, headers=headers)
+
+    def bootstrap(self):
+        current_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
+
+        def send_updates():
+            active_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
+
+            if active_states['power'] != current_states['power']:
+                current_states['power'] = active_states['power']
+
+                if current_states['power']:
+                    print('Viera started!')
+                else:
+                    print('Viera shut down!')
+
+            if active_states['volume'] != current_states['volume']:
+                current_states['volume'] = active_states['volume']
+
+                print('Viera volume changed to %s' % current_states['volume'])
+
+        add_job(send_updates, 'interval', seconds=10)
 
     def toggle_power(self):
         self._send_request('NRC_POWER-ONOFF')
