@@ -5,7 +5,6 @@ import glob
 from os.path import relpath
 from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
-from automation.event_publisher import get_events_for
 from automation.scheduler import add_job
 
 
@@ -82,7 +81,7 @@ def bootstrap_plugin(plugin):
 
     instance = module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
 
-    instance.apply_history(get_events_for(plugin.eid))
+    instance.apply_history(plugin['state'] if 'state' in plugin else None)
 
     def handle_ping():
         plugin_instance = _get_plugin_instance(plugin.eid)
@@ -111,7 +110,7 @@ def _get_plugin_instance(plugin_id):
 
     instance = module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
 
-    instance.apply_history(get_events_for(plugin.eid))
+    instance.apply_history(plugin['state'] if 'state' in plugin else None)
 
     return instance
 

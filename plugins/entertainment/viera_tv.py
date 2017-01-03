@@ -13,8 +13,7 @@ def get_type():
 
 class VieraTv(PluginBase):
     def __init__(self, plugin_id, settings_manager):
-        super().__init__(plugin_id, settings_manager)
-        self.current_states = {'power': False, 'volume': 0}
+        super().__init__(plugin_id, settings_manager, default_state={'current_states': {'power': False, 'volume': 0}})
 
     def _send_request(self, command):
         body = (
@@ -110,21 +109,21 @@ class VieraTv(PluginBase):
     def ping(self):
         active_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
 
-        if active_states['power'] != self.current_states['power']:
-            if self.current_states['power']:
+        if active_states['power'] != self._state['current_states']['power']:
+            if self._state['current_states']['power']:
                 self._apply('tv_turned_on', {})
             else:
                 self._apply('tv_turned_off', {})
 
-        if active_states['volume'] != self.current_states['volume']:
+        if active_states['volume'] != self._state['current_states']['volume']:
             if active_states['volume']:
                 self._apply('tv_volume_changed', {'new_volume': active_states['volume']})
 
     def _on_tv_turned_on(self, event_data):
-        self.current_states['power'] = True
+        self._state['current_states']['power'] = True
 
     def _on_tv_turned_off(self, event_data):
-        self.current_states['power'] = False
+        self._state['current_states']['power'] = False
 
     def _on_tv_volume_changed(self, event_data):
-        self.current_states['volume'] = event_data['new_volume']
+        self._state['current_states']['volume'] = event_data['new_volume']

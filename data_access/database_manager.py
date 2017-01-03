@@ -15,6 +15,11 @@ class DatabaseManager:
 
         table.remove(eids=[eid])
 
+    def update(self, category, eid, data):
+        table = self.db.table(category)
+
+        table.update(data, eids=[eid])
+
     def get_all(self, category):
         table = self.db.table(category)
 

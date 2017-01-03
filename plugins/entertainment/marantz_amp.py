@@ -13,8 +13,8 @@ def get_type():
 
 class MarantzAmp(PluginBase):
     def __init__(self, plugin_id, settings_manager):
-        super().__init__(plugin_id, settings_manager)
-        self.current_states = {'muted': False, 'power': False}
+        super().__init__(plugin_id, settings_manager,
+                         default_state={'current_states': {'muted': False, 'power': False}})
 
     def _send_command(self, command):
         body = 'cmd0=%s' % command
@@ -78,26 +78,26 @@ class MarantzAmp(PluginBase):
     def ping(self):
         active_states = self._get_status()
 
-        if active_states['power'] != self.current_states['power']:
+        if active_states['power'] != self._state['current_states']['power']:
             if active_states['power']:
                 self._apply('amplifier_turned_on', {})
             else:
                 self._apply('amplifier_turned_off', {})
 
-        if active_states['muted'] != self.current_states['muted']:
+        if active_states['muted'] != self._state['current_states']['muted']:
             if active_states['muted']:
                 self._apply('amplifier_muted', {})
             else:
                 self._apply('amplifier_un_muted', {})
 
     def _on_amplifier_turned_on(self, event_data):
-        self.current_states['power'] = True
+        self._state['current_states']['power'] = True
 
     def _on_amplifier_turned_off(self, event_data):
-        self.current_states['power'] = False
+        self._state['current_states']['power'] = False
 
     def _on_amplifier_muted(self, event_data):
-        self.current_states['muted'] = True
+        self._state['current_states']['muted'] = True
 
     def _on_amplifier_un_muted(self, event_data):
-        self.current_states['muted'] = False
+        self._state['current_states']['muted'] = False

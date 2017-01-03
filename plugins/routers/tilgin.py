@@ -15,9 +15,8 @@ def get_type():
 
 class TilginRouter(PluginBase):
     def __init__(self, plugin_id, settings_manager):
-        super().__init__(plugin_id, settings_manager)
+        super().__init__(plugin_id, settings_manager, default_state={'active_devices': []})
         self.cache = cache.get_cache('tilgin_router', expire=300)
-        self.active_devices = []
 
     def _get_api_cookies(self):
         login_user = self._get_setting('login_user')
@@ -55,7 +54,7 @@ class TilginRouter(PluginBase):
         return result
 
     def get_active_devices(self):
-        return self.active_devices
+        return self._state['active_devices']
 
     def get_ip_from_mac(self, mac_address):
         devices = self.get_active_devices()
@@ -69,7 +68,7 @@ class TilginRouter(PluginBase):
 
     def ping(self):
         active_devices = self._get_active_devices()
-        current_devices = self.active_devices
+        current_devices = self.get_active_devices()
 
         new_devices = [item for item in active_devices if item['mac']
                        not in [dev['mac'] for dev in current_devices]]
@@ -84,7 +83,7 @@ class TilginRouter(PluginBase):
             self._apply('device_signed_off', device)
 
     def _on_device_signed_on(self, event_data):
-        self.active_devices.append(event_data)
+        self._state['active_devices'].append(event_data)
 
     def _on_device_signed_off(self, event_data):
-        self.active_devices.remove(event_data)
+        self._state['active_devices'].remove(event_data)
