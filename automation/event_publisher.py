@@ -7,3 +7,7 @@ client = Client('localhost')
 
 def publish_event(source, event_name, event_data):
     client.publish_events(source, [Event(uuid4(), event_name, event_data)])
+
+
+def subscribe(source, event_name, callback):
+    a = 0
