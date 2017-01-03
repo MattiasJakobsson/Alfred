@@ -1,4 +1,4 @@
-from automation.event_publisher import publish_event, subscribe
+from plugins.plugin_base import PluginBase
 
 
 def get_available_settings():
@@ -9,25 +9,21 @@ def get_type():
     return PersonalDevice
 
 
-class PersonalDevice:
-    def __init__(self, settings_manager):
-        self.settings_manager = settings_manager
-
-    def bootstrap(self):
-        def signed_on(evnt):
-            mac = self.settings_manager.get_setting('mac_address')
-
-            if mac == evnt['mac']:
-                publish_event('personal_device', 'PersonSignedOn', self.get_person())
-
-        def signed_off(evnt):
-            mac = self.settings_manager.get_setting('mac_address')
-
-            if mac == evnt['mac']:
-                publish_event('personal_device', 'PersonSignedOff', self.get_person())
-
-        subscribe('personal_device', 'DeviceSignedOn', signed_on)
-        subscribe('personal_device', 'DeviceSignedOff', signed_off)
+class PersonalDevice(PluginBase):
+    def __init__(self, plugin_id, settings_manager):
+        super().__init__(plugin_id, settings_manager)
 
     def get_person(self):
-        return {'name': self.settings_manager.get_setting('name'), 'email': self.settings_manager.get_setting('email')}
+        return {'name': self._get_setting('name'), 'email': self._get_setting('email')}
+
+    def _subscribe_to_device_signed_on(self, event_data):
+        mac = self._get_setting('mac_address')
+
+        if mac == event_data['mac']:
+            self._apply('person_signed_on', self.get_person())
+
+    def _subscribe_to_device_signed_off(self, event_data):
+        mac = self._get_setting('mac_address')
+
+        if mac == event_data['mac']:
+            self._apply('person_signed_off', self.get_person())

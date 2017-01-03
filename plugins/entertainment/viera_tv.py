@@ -1,7 +1,6 @@
 import requests
 from xml.etree import ElementTree
-from automation.scheduler import add_job
-from automation.event_publisher import publish_event
+from plugins.plugin_base import PluginBase
 
 
 def get_available_settings():
@@ -12,9 +11,10 @@ def get_type():
     return VieraTv
 
 
-class VieraTv:
-    def __init__(self, settings_manager):
-        self.settings_manager = settings_manager
+class VieraTv(PluginBase):
+    def __init__(self, plugin_id, settings_manager):
+        super().__init__(plugin_id, settings_manager)
+        self.current_states = {'power': False, 'volume': 0}
 
     def _send_request(self, command):
         body = (
@@ -35,7 +35,7 @@ class VieraTv:
             'SOAPACTION': '"urn:panasonic-com:service:p00NetworkControl:1#X_SendKey"'
         }
 
-        ip = self.settings_manager.get_setting('ip_address')
+        ip = self._get_setting('ip_address')
 
         requests.post('http://%s:55000/nrc/control_0' % ip, data=body, headers=headers)
 
@@ -58,31 +58,9 @@ class VieraTv:
             'SOAPACTION': '"urn:schemas-upnp-org:service:RenderingControl:1#%s"' % query
         }
 
-        ip = self.settings_manager.get_setting('ip_address')
+        ip = self._get_setting('ip_address')
 
         return requests.post('http://%s:55000/dmr/control_0' % ip, data=body, headers=headers)
-
-    def bootstrap(self):
-        current_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
-
-        def send_updates():
-            active_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
-
-            if active_states['power'] != current_states['power']:
-                current_states['power'] = active_states['power']
-
-                if current_states['power']:
-                    publish_event('vieratv', 'TvTurnedOn', {})
-                else:
-                    publish_event('vieratv', 'TvTurnedOff', {})
-
-            if active_states['volume'] != current_states['volume']:
-                if active_states['volume']:
-                    current_states['volume'] = active_states['volume']
-
-                    publish_event('vieratv', 'VolumeChanged', {'newVolume': current_states['volume']})
-
-        add_job(send_updates, 'interval', seconds=10)
 
     def toggle_power(self):
         self._send_request('NRC_POWER-ONOFF')
@@ -128,3 +106,25 @@ class VieraTv:
             return True
         except:
             return False
+
+    def ping(self):
+        active_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
+
+        if active_states['power'] != self.current_states['power']:
+            if self.current_states['power']:
+                self._apply('tv_turned_on', {})
+            else:
+                self._apply('tv_turned_off', {})
+
+        if active_states['volume'] != self.current_states['volume']:
+            if active_states['volume']:
+                self._apply('tv_volume_changed', {'new_volume': active_states['volume']})
+
+    def _on_tv_turned_on(self, event_data):
+        self.current_states['power'] = True
+
+    def _on_tv_turned_off(self, event_data):
+        self.current_states['power'] = False
+
+    def _on_tv_volume_changed(self, event_data):
+        self.current_states['volume'] = event_data['new_volume']

@@ -1,10 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-from automation.scheduler import add_job
 
 from data_access.cache_manager import cache
-from data_access.database_manager import DatabaseManager
-from automation.event_publisher import publish_event
+from plugins.plugin_base import PluginBase
 
 
 def get_available_settings():
@@ -15,15 +13,15 @@ def get_type():
     return TilginRouter
 
 
-class TilginRouter:
-    def __init__(self, settings_manager):
-        self.settings_manager = settings_manager
+class TilginRouter(PluginBase):
+    def __init__(self, plugin_id, settings_manager):
+        super().__init__(plugin_id, settings_manager)
         self.cache = cache.get_cache('tilgin_router', expire=300)
-        self.db_manager = DatabaseManager()
+        self.active_devices = []
 
     def _get_api_cookies(self):
-        login_user = self.settings_manager.get_setting('login_user')
-        login_password = self.settings_manager.get_setting('login_password')
+        login_user = self._get_setting('login_user')
+        login_password = self._get_setting('login_password')
 
         payload = {'__formtok': '', '__user': login_user, '__auth': 'login',
                    '__pass': login_password}
@@ -35,7 +33,7 @@ class TilginRouter:
         return response.cookies
 
     def _sign_in(self):
-        return self.cache.get(key='cookies', createfunc=self._get_api_cookies)
+        return self.cache.get(key='%s_cookies' % self._plugin_id, createfunc=self._get_api_cookies)
 
     def _get_active_devices(self):
         cookies = self._sign_in()
@@ -56,40 +54,37 @@ class TilginRouter:
 
         return result
 
-    def bootstrap(self):
-        def send_updates():
-            active_devices = self._get_active_devices()
-            current_devices = self.db_manager.get_all('tilgin_devices')
-
-            new_devices = [item for item in active_devices if item['mac']
-                           not in [dev['mac'] for dev in current_devices]]
-
-            removed_devices = [item for item in current_devices if item['mac']
-                               not in [dev['mac'] for dev in active_devices]]
-
-            for device in new_devices:
-                publish_event('tilginrouter', 'DeviceSignedOn', device)
-
-                self.db_manager.insert('tilgin_devices', device)
-
-            for device in removed_devices:
-                publish_event('tilginrouter', 'DeviceSignedOff', device)
-
-                self.db_manager.delete('tilgin_devices', device.eid)
-
-        add_job(send_updates, 'interval', seconds=10)
-
     def get_active_devices(self):
-        return self.db_manager.get_all('tilgin_devices')
+        return self.active_devices
 
     def get_ip_from_mac(self, mac_address):
         devices = self.get_active_devices()
 
-        items = [item for item in devices if 'mac' in item and item['mac'] == mac_address]
-
-        return items[0]['ip']
+        return next([item['ip'] for item in devices if 'mac' in item and item['mac'] == mac_address], '')
 
     def get_is_device_online(self, mac_address):
         devices = self.get_active_devices()
 
         return mac_address in [item['mac'] for item in devices]
+
+    def ping(self):
+        active_devices = self._get_active_devices()
+        current_devices = self.active_devices
+
+        new_devices = [item for item in active_devices if item['mac']
+                       not in [dev['mac'] for dev in current_devices]]
+
+        removed_devices = [item for item in current_devices if item['mac']
+                           not in [dev['mac'] for dev in active_devices]]
+
+        for device in new_devices:
+            self._apply('device_signed_on', device)
+
+        for device in removed_devices:
+            self._apply('device_signed_off', device)
+
+    def _on_device_signed_on(self, event_data):
+        self.active_devices.append(event_data)
+
+    def _on_device_signed_off(self, event_data):
+        self.active_devices.remove(event_data)

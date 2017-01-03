@@ -1,8 +1,6 @@
 import requests
 from xml.etree import ElementTree
-from automation.scheduler import add_job
-from data_access.database_manager import DatabaseManager
-from automation.event_publisher import publish_event
+from plugins.plugin_base import PluginBase
 
 
 def get_available_settings():
@@ -13,10 +11,10 @@ def get_type():
     return MarantzAmp
 
 
-class MarantzAmp:
-    def __init__(self, settings_manager):
-        self.settings_manager = settings_manager
-        self.db_manager = DatabaseManager()
+class MarantzAmp(PluginBase):
+    def __init__(self, plugin_id, settings_manager):
+        super().__init__(plugin_id, settings_manager)
+        self.current_states = {'muted': False, 'power': False}
 
     def _send_command(self, command):
         body = 'cmd0=%s' % command
@@ -26,11 +24,11 @@ class MarantzAmp:
         }
 
         requests.post('http://%s/MainZone/index.put.asp' %
-                      self.settings_manager.get_setting('ip_address'), data=body, headers=headers)
+                      self._get_setting('ip_address'), data=body, headers=headers)
 
     def _get_status(self):
         response = requests.get('http://%s/goform/formMainZone_MainZoneXml.xml' %
-                                self.settings_manager.get_setting('ip_address'))
+                                self._get_setting('ip_address'))
 
         root = ElementTree.fromstring(response.content)
 
@@ -38,30 +36,6 @@ class MarantzAmp:
         muted = root.find('Mute').find('value').text == 'ON'
 
         return {'power': power, 'muted': muted}
-
-    def bootstrap(self):
-        current_states = self._get_status()
-
-        def send_updates():
-            active_states = self._get_status()
-
-            if active_states['power'] != current_states['power']:
-                current_states['power'] = active_states['power']
-
-                if current_states['power']:
-                    publish_event('marantzamp', 'MarantzAmpTurnedOn', {})
-                else:
-                    publish_event('marantzamp', 'MarantzAmpTurnedOff', {})
-
-            if active_states['muted'] != current_states['muted']:
-                current_states['muted'] = active_states['muted']
-
-                if current_states['muted']:
-                    publish_event('marantzamp', 'MarantzAmpMuted', {})
-                else:
-                    publish_event('marantzamp', 'MarantzAmpUnMuted', {})
-
-        add_job(send_updates, 'interval', seconds=10)
 
     def toggle_power(self):
         status = self._get_status()
@@ -100,3 +74,30 @@ class MarantzAmp:
         status = self._get_status()
 
         return status['muted']
+
+    def ping(self):
+        active_states = self._get_status()
+
+        if active_states['power'] != self.current_states['power']:
+            if active_states['power']:
+                self._apply('amplifier_turned_on', {})
+            else:
+                self._apply('amplifier_turned_off', {})
+
+        if active_states['muted'] != self.current_states['muted']:
+            if active_states['muted']:
+                self._apply('amplifier_muted', {})
+            else:
+                self._apply('amplifier_un_muted', {})
+
+    def _on_amplifier_turned_on(self, event_data):
+        self.current_states['power'] = True
+
+    def _on_amplifier_turned_off(self, event_data):
+        self.current_states['power'] = False
+
+    def _on_amplifier_muted(self, event_data):
+        self.current_states['muted'] = True
+
+    def _on_amplifier_un_muted(self, event_data):
+        self.current_states['muted'] = False
