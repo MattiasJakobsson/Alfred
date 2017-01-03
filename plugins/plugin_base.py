@@ -10,9 +10,9 @@ class PluginBase:
         self._database_manager = DatabaseManager()
 
     def _apply(self, event_name, event_data):
-        apply_method = getattr(self, '_on_%s' % event_name)
+        if hasattr(self, '_on_%s' % event_name):
+            apply_method = getattr(self, '_on_%s' % event_name)
 
-        if apply_method:
             apply_method(event_data)
 
             self._database_manager.update('plugins', self._plugin_id, {'state': self._state})

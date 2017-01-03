@@ -3,17 +3,17 @@ from uuid import uuid4
 
 
 client = Client('localhost')
-events = {}
+subscriptions = []
 
 
 def publish_event(source, event_name, event_data):
     client.publish_events(source, [Event(uuid4(), event_name, event_data)])
 
-    if source not in events:
-        events[source] = []
+    subscribers = [item['callback'] for item in subscriptions if item['event_name'] == event_name]
 
-    events[source].append({'name': event_name, 'data': event_data})
+    for subscriber in subscribers:
+        subscriber(event_data)
 
 
-def subscribe(source, event_name, callback):
-    a = 0
+def subscribe(event_name, callback):
+    subscriptions.append({'event_name': event_name, 'callback': callback})

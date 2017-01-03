@@ -6,6 +6,7 @@ from os.path import relpath
 from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
 from automation.scheduler import add_job
+from automation.event_publisher import subscribe
 
 
 database_manager = DatabaseManager()
@@ -82,6 +83,18 @@ def bootstrap_plugin(plugin):
     instance = module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
 
     instance.apply_history(plugin['state'] if 'state' in plugin else None)
+
+    subscriptions = [item[0] for item in inspect.getmembers(instance) if item[0].startswith('_subscribe_to_')]
+
+    for subscription in subscriptions:
+        event_name = subscription[len('_subscribe_to_'):]
+
+        def handle_subscription(event_data):
+            plugin_instance = _get_plugin_instance(plugin.eid)
+
+            getattr(plugin_instance, subscription)(event_data)
+
+        subscribe(event_name, handle_subscription)
 
     def handle_ping():
         plugin_instance = _get_plugin_instance(plugin.eid)

@@ -59,7 +59,12 @@ class TilginRouter(PluginBase):
     def get_ip_from_mac(self, mac_address):
         devices = self.get_active_devices()
 
-        return next([item['ip'] for item in devices if 'mac' in item and item['mac'] == mac_address], '')
+        ips = [item['ip'] for item in devices if 'mac' in item and item['mac'] == mac_address]
+
+        if len(ips) > 0:
+            return ips[0]
+        else:
+            return ''
 
     def get_is_device_online(self, mac_address):
         devices = self.get_active_devices()
