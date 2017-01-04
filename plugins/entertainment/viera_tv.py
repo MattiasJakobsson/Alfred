@@ -110,7 +110,7 @@ class VieraTv(PluginBase):
         active_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
 
         if active_states['power'] != self._state['current_states']['power']:
-            if self._state['current_states']['power']:
+            if active_states['power']:
                 self._apply('tv_turned_on', {})
             else:
                 self._apply('tv_turned_off', {})

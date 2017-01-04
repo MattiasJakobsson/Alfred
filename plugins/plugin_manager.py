@@ -87,14 +87,7 @@ def bootstrap_plugin(plugin):
     subscriptions = [item[0] for item in inspect.getmembers(instance) if item[0].startswith('_subscribe_to_')]
 
     for subscription in subscriptions:
-        event_name = subscription[len('_subscribe_to_'):]
-
-        def handle_subscription(event_data):
-            plugin_instance = _get_plugin_instance(plugin.eid)
-
-            getattr(plugin_instance, subscription)(event_data)
-
-        subscribe(event_name, handle_subscription)
+        subscribe_plugin_subscription(subscription, plugin)
 
     def handle_ping():
         plugin_instance = _get_plugin_instance(plugin.eid)
@@ -107,6 +100,17 @@ def bootstrap_plugin(plugin):
         job = add_job(handle_ping, 'interval', seconds=seconds)
 
         jobs[plugin.eid] = job
+
+
+def subscribe_plugin_subscription(subscription, plugin):
+    event_name = subscription[len('_subscribe_to_'):]
+
+    def handle_subscription(event_data):
+        plugin_instance = _get_plugin_instance(plugin.eid)
+
+        getattr(plugin_instance, subscription)(event_data)
+
+    subscribe(event_name, handle_subscription)
 
 
 def boostrap():

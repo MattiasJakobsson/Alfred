@@ -1,4 +1,7 @@
 from tinydb import TinyDB
+import threading
+
+lock = threading.RLock()
 
 
 class DatabaseManager:
@@ -6,26 +9,31 @@ class DatabaseManager:
         self.db = TinyDB('c:/temp/db.json')
 
     def insert(self, category, data):
-        table = self.db.table(category)
+        with lock:
+            table = self.db.table(category)
 
-        return table.insert(data)
+            return table.insert(data)
 
     def delete(self, category, eid):
-        table = self.db.table(category)
+        with lock:
+            table = self.db.table(category)
 
-        table.remove(eids=[eid])
+            table.remove(eids=[eid])
 
     def update(self, category, eid, data):
-        table = self.db.table(category)
+        with lock:
+            table = self.db.table(category)
 
-        table.update(data, eids=[eid])
+            table.update(data, eids=[eid])
 
     def get_all(self, category):
-        table = self.db.table(category)
+        with lock:
+            table = self.db.table(category)
 
-        return table.all()
+            return table.all()
 
     def get_by_id(self, category, eid):
-        table = self.db.table(category)
+        with lock:
+            table = self.db.table(category)
 
-        return table.get(eid=eid)
+            return table.get(eid=eid)
