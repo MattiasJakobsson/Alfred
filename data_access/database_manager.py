@@ -6,7 +6,7 @@ lock = threading.RLock()
 
 class DatabaseManager:
     def __init__(self):
-        self.db = TinyDB('c:/temp/db.json')
+        self.db = TinyDB('.data/db.json')
 
     def insert(self, category, data):
         with lock:
