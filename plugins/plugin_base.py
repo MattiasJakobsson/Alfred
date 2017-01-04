@@ -17,7 +17,7 @@ class PluginBase:
 
             self._database_manager.update('plugins', self._plugin_id, {'state': self._state})
 
-        publish_event('plugins-%s' % str(self._plugin_id), event_name, event_data)
+        publish_event(event_name, event_data)
 
     def apply_history(self, state):
         if state is not None:
