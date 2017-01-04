@@ -23,4 +23,4 @@ class SlackBot(PluginBase):
         return json.loads(response.text)
 
     def send_message(self, channel, message):
-        self._post('chat.postMessage', {'channel': channel, 'text': message})
+        self._post('chat.postMessage', {'channel': channel, 'text': message, 'parse': 'full'})
