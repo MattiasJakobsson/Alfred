@@ -27,8 +27,6 @@ class TilginRouter(PluginBase):
 
         response = requests.post('http://192.168.1.1/', data=payload)
 
-        self.cookies = response.cookies
-
         return response.cookies
 
     def _sign_in(self):
