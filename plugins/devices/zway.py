@@ -26,16 +26,6 @@ class Zway(PluginBase):
                                        headers={'Accept': 'application/json',
                                                 'Authorization': 'Basic %s' % authorization}).text)
 
-    def _post(self, path):
-        info = ('%s:%s' % (self._get_setting('username'), self._get_setting('password'))).encode('utf-8')
-
-        authorization = base64.b64encode(info).decode('utf-8')
-
-        return json.loads(requests.post('http://%s:%s/ZAutomation/api%s' % (self._get_setting('ip'),
-                                                                            self._get_setting('port'), path),
-                                        headers={'Accept': 'application/json',
-                                                 'Authorization': 'Basic %s' % authorization}).text)
-
     def get_instances(self):
         data = self._get('/v1/instances')
 

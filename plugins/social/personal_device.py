@@ -16,13 +16,20 @@ class PersonalDevice(PluginBase):
     def get_person(self):
         return {'name': self._get_setting('name'), 'email': self._get_setting('email')}
 
-    def _subscribe_to_device_signed_on(self, event_data):
+    def get_automations(self):
+        return [{'type': 'subscription', 'subscribe_to': 'device_signed_on', 'target_id': self._plugin_id,
+                 'command': 'handle_device_signed_on', 'parameters': {'event_data': {}}},
+                {'type': 'subscription', 'subscribe_to': 'device_signed_off', 'target_id': self._plugin_id,
+                 'command': 'handle_device_signed_off', 'parameters': {'event_data': {}}}
+                ]
+
+    def handle_device_signed_on(self, event_data):
         mac = self._get_setting('mac_address')
 
         if mac == event_data['mac']:
             self._apply('person_signed_on', self.get_person())
 
-    def _subscribe_to_device_signed_off(self, event_data):
+    def handle_device_signed_off(self, event_data):
         mac = self._get_setting('mac_address')
 
         if mac == event_data['mac']:

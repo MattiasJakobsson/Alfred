@@ -5,8 +5,7 @@ import glob
 from os.path import relpath
 from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
-from automation.scheduler import add_job
-from automation.event_publisher import subscribe
+from automation.automation_manager import add_automation
 
 
 database_manager = DatabaseManager()
@@ -16,7 +15,7 @@ def get_available_commands(cls):
     return [{'command': item[0], 'parameters': [p for p in list(inspect.signature(item[1]).parameters) if p != 'self']}
             for item in inspect.getmembers(cls)
             if not item[0].startswith('get_') and not item[0] == 'apply_history'
-            and not item[0] == 'ping' and not item[0].startswith('_')]
+            and not item[0].startswith('_')]
 
 
 def get_available_queries(cls):
@@ -67,57 +66,15 @@ def build_plugin_data(plugin):
         'availableQueries': get_available_queries(plugin_type)
     }
 
-jobs = {}
-
-
-def teardown_plugin(plugin):
-    if plugin.eid in jobs:
-        jobs[plugin.eid].remove()
-
-        del jobs[plugin.eid]
-
 
 def bootstrap_plugin(plugin):
     module = importlib.import_module(plugin['type'], package='plugins')
 
     instance = module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
 
-    instance.apply_history(plugin['state'] if 'state' in plugin else None)
-
-    subscriptions = [item[0] for item in inspect.getmembers(instance) if item[0].startswith('_subscribe_to_')]
-
-    for subscription in subscriptions:
-        subscribe_plugin_subscription(subscription, plugin)
-
-    def handle_ping():
-        plugin_instance = _get_plugin_instance(plugin.eid)
-
-        plugin_instance.ping()
-
-    if hasattr(instance, 'ping'):
-        seconds = instance.ping_timeout if hasattr(instance, 'ping_timeout') else 10
-
-        job = add_job(handle_ping, 'interval', seconds=seconds)
-
-        jobs[plugin.eid] = job
-
-
-def subscribe_plugin_subscription(subscription, plugin):
-    event_name = subscription[len('_subscribe_to_'):]
-
-    def handle_subscription(event_data):
-        plugin_instance = _get_plugin_instance(plugin.eid)
-
-        getattr(plugin_instance, subscription)(event_data)
-
-    subscribe(event_name, handle_subscription)
-
-
-def boostrap():
-    plugins = database_manager.get_all('plugins')
-
-    for plugin in plugins:
-        bootstrap_plugin(plugin)
+    if hasattr(instance, 'get_automations'):
+        for automation in instance.get_automations():
+            add_automation(automation, execute_command)
 
 
 def _get_plugin_instance(plugin_id):

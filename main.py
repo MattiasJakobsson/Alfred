@@ -1,12 +1,10 @@
 from waitress import serve
 from api.app import configure
-from plugins.plugin_manager import boostrap
 from automation import automation_manager
+from plugins.plugin_manager import execute_command
 
 
-boostrap()
-
-automation_manager.bootstrap()
+automation_manager.bootstrap(execute_command)
 
 api = configure()
 

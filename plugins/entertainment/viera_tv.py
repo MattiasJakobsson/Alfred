@@ -106,7 +106,7 @@ class VieraTv(PluginBase):
         except:
             return False
 
-    def ping(self):
+    def update_state(self):
         active_states = {'power': self.get_power_status(), 'volume': self.get_volume()}
 
         if active_states['power'] != self._state['current_states']['power']:
@@ -118,6 +118,10 @@ class VieraTv(PluginBase):
         if active_states['volume'] != self._state['current_states']['volume']:
             if active_states['volume']:
                 self._apply('tv_volume_changed', {'new_volume': active_states['volume']})
+
+    def get_automations(self):
+        return [{'type': 'interval', 'interval': 10, 'target_id': self._plugin_id, 'command': 'update_state',
+                 'parameters': {}}]
 
     def _on_tv_turned_on(self, event_data):
         self._state['current_states']['power'] = True

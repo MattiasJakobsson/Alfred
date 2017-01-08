@@ -75,7 +75,7 @@ class MarantzAmp(PluginBase):
 
         return status['muted']
 
-    def ping(self):
+    def update_state(self):
         active_states = self._get_status()
 
         if active_states['power'] != self._state['current_states']['power']:
@@ -89,6 +89,10 @@ class MarantzAmp(PluginBase):
                 self._apply('amplifier_muted', {})
             else:
                 self._apply('amplifier_un_muted', {})
+
+    def get_automations(self):
+        return [{'type': 'interval', 'interval': 10, 'target_id': self._plugin_id, 'command': 'update_state',
+                 'parameters': {}}]
 
     def _on_amplifier_turned_on(self, event_data):
         self._state['current_states']['power'] = True

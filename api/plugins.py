@@ -1,5 +1,5 @@
 from plugins.plugin_manager import get_available_plugins, execute_command, get_query_result, bootstrap_plugin, \
-    teardown_plugin, build_plugin_data
+    build_plugin_data
 import json
 from data_access.database_manager import DatabaseManager
 
@@ -9,13 +9,11 @@ def bootstrap(application):
     plugin_command = PluginCommand()
     plugin_query = PluginQuery()
     available_plugins = AvailablePlugins()
-    remove_plugin = RemovePlugin()
 
     application.add_route('/plugins', plugin_list)
     application.add_route('/plugins/{plugin_id}/commands/{command}', plugin_command)
     application.add_route('/plugins/{plugin_id}/queries/{query}', plugin_query)
     application.add_route('/plugins/available', available_plugins)
-    application.add_route('/plugins/{plugin_id}/remove', remove_plugin)
 
 
 class AvailablePlugins:
@@ -52,20 +50,6 @@ class PluginList:
         added_plugin = self.db_manager.get_by_id('plugins', result)
 
         bootstrap_plugin(added_plugin)
-
-        resp.body = json.dumps({'success': True})
-
-
-class RemovePlugin:
-    def __init__(self):
-        self.db_manager = DatabaseManager()
-
-    def on_post(self, req, resp, plugin_id):
-        plugin = self.db_manager.get_by_id('plugins', int(plugin_id))
-
-        teardown_plugin(plugin)
-
-        self.db_manager.delete('plugins', int(plugin_id))
 
         resp.body = json.dumps({'success': True})
 

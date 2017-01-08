@@ -66,7 +66,7 @@ class TilginRouter(PluginBase):
 
         return mac_address in [item['mac'] for item in devices]
 
-    def ping(self):
+    def update_state(self):
         active_devices = self._get_active_devices()
         current_devices = self.get_active_devices()
 
@@ -84,6 +84,10 @@ class TilginRouter(PluginBase):
 
         for device in removed_devices:
             self._apply('device_signed_off', device)
+
+    def get_automations(self):
+        return [{'type': 'interval', 'interval': 10, 'target_id': self._plugin_id, 'command': 'update_state',
+                 'parameters': {}}]
 
     def _on_device_signed_on(self, event_data):
         self._state['active_devices'].append(event_data)
