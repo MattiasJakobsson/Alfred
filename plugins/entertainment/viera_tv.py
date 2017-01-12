@@ -1,6 +1,7 @@
 import requests
 from xml.etree import ElementTree
 from plugins.plugin_base import PluginBase
+import uuid
 
 
 def get_available_settings():
@@ -120,8 +121,16 @@ class VieraTv(PluginBase):
                 self._apply('tv_volume_changed', {'new_volume': active_states['volume']})
 
     def get_automations(self):
-        return [{'type': 'interval', 'interval': 10, 'target_id': self._plugin_id, 'command': 'update_state',
-                 'parameters': {}}]
+        return [{
+            'definition': {'initial_step': {
+                'id': str(uuid.uuid4()),
+                'type': '.workflows.steps.execute_plugin_command',
+                'plugin_id': self._plugin_id,
+                'command': 'update_state',
+                'parameters': {}
+            }},
+            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 10}]
+        }]
 
     def _on_tv_turned_on(self, event_data):
         self._state['current_states']['power'] = True

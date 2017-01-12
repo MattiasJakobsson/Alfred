@@ -1,4 +1,5 @@
 from plugins.plugin_base import PluginBase
+import uuid
 
 
 def get_available_settings():
@@ -17,11 +18,27 @@ class PersonalDevice(PluginBase):
         return {'name': self._get_setting('name'), 'email': self._get_setting('email')}
 
     def get_automations(self):
-        return [{'type': 'subscription', 'subscribe_to': 'device_signed_on', 'target_id': self._plugin_id,
-                 'command': 'handle_device_signed_on', 'parameters': {'event_data': {}}},
-                {'type': 'subscription', 'subscribe_to': 'device_signed_off', 'target_id': self._plugin_id,
-                 'command': 'handle_device_signed_off', 'parameters': {'event_data': {}}}
-                ]
+        return [{
+            'definition': {'initial_step': {
+                'id': str(uuid.uuid4()),
+                'type': '.workflows.steps.execute_plugin_command',
+                'plugin_id': self._plugin_id,
+                'command': 'handle_device_signed_on',
+                'parameters': {}
+            }},
+            'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_on'}]
+        },
+            {
+                'definition': {'initial_step': {
+                    'id': str(uuid.uuid4()),
+                    'type': '.workflows.steps.execute_plugin_command',
+                    'plugin_id': self._plugin_id,
+                    'command': 'handle_device_signed_off',
+                    'parameters': {}
+                }},
+                'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_off'}]
+            }
+        ]
 
     def handle_device_signed_on(self, event_data):
         mac = self._get_setting('mac_address')

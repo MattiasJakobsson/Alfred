@@ -1,10 +1,9 @@
 from waitress import serve
 from api.app import configure
-from automation import automation_manager
-from plugins.plugin_manager import execute_command
+import automation.workflows.workflow_manager
 
 
-automation_manager.bootstrap(execute_command)
+automation.workflows.workflow_manager.bootstrap()
 
 api = configure()
 

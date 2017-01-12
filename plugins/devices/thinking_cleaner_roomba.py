@@ -1,6 +1,7 @@
 from plugins.plugin_base import PluginBase
 import requests
 import json
+import uuid
 
 
 def get_available_settings():
@@ -36,9 +37,6 @@ class ThinkingCleanerRoomba(PluginBase):
     def find_cleaner(self):
         requests.get('http://%s/command.json?command=find_me' % self._get_setting('ip'))
 
-    def leave_home(self):
-        requests.get('http://%s/command.json?command=leavehomebase' % self._get_setting('ip'))
-
     def update_state(self):
         active_states = self.get_status()
 
@@ -52,8 +50,16 @@ class ThinkingCleanerRoomba(PluginBase):
                 self._apply('cleaner_stopped_cleaning', {})
 
     def get_automations(self):
-        return [{'type': 'interval', 'interval': 10, 'target_id': self._plugin_id, 'command': 'update_state',
-                 'parameters': {}}]
+        return [{
+            'definition': {'initial_step': {
+                'id': str(uuid.uuid4()),
+                'type': '.workflows.steps.execute_plugin_command',
+                'plugin_id': self._plugin_id,
+                'command': 'update_state',
+                'parameters': {}
+            }},
+            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 10}]
+        }]
 
     def _on_cleaner_changed_state(self, event_data):
         self._state['cleaner_state'] = event_data['new_state']

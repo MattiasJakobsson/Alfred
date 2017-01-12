@@ -5,7 +5,7 @@ import glob
 from os.path import relpath
 from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
-from automation.automation_manager import add_automation
+from automation.workflows.workflow_manager import define_workflow
 
 
 database_manager = DatabaseManager()
@@ -74,7 +74,7 @@ def bootstrap_plugin(plugin):
 
     if hasattr(instance, 'get_automations'):
         for automation in instance.get_automations():
-            add_automation(automation, execute_command)
+            define_workflow(automation['definition'], automation['triggers'])
 
 
 def _get_plugin_instance(plugin_id):

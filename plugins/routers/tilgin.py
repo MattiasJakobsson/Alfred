@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import uuid
 
 from data_access.cache_manager import cache
 from plugins.plugin_base import PluginBase
@@ -86,8 +87,16 @@ class TilginRouter(PluginBase):
             self._apply('device_signed_off', device)
 
     def get_automations(self):
-        return [{'type': 'interval', 'interval': 10, 'target_id': self._plugin_id, 'command': 'update_state',
-                 'parameters': {}}]
+        return [{
+            'definition': {'initial_step': {
+                'id': str(uuid.uuid4()),
+                'type': '.workflows.steps.execute_plugin_command',
+                'plugin_id': self._plugin_id,
+                'command': 'update_state',
+                'parameters': {}
+            }},
+            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 10}]
+        }]
 
     def _on_device_signed_on(self, event_data):
         self._state['active_devices'].append(event_data)
