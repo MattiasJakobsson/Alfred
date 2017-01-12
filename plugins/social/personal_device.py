@@ -18,25 +18,29 @@ class PersonalDevice(PluginBase):
         return {'name': self._get_setting('name'), 'email': self._get_setting('email')}
 
     def get_automations(self):
+        signed_on_id = str(uuid.uuid4())
+        signed_off_id = str(uuid.uuid4())
+
         return [{
             'definition': {'initial_step': {
-                'id': str(uuid.uuid4()),
+                'id': signed_on_id,
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'handle_device_signed_on',
-                'parameters': {}
+                'parameters': {'event_data': '[??state["%s"]??]' % signed_on_id}
             }},
             'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_on'}]
         },
             {
                 'definition': {'initial_step': {
-                    'id': str(uuid.uuid4()),
+                    'id': signed_off_id,
                     'type': '.workflows.steps.execute_plugin_command',
                     'plugin_id': self._plugin_id,
                     'command': 'handle_device_signed_off',
-                    'parameters': {}
+                    'parameters': {'event_data': '[??state["%s"]??]' % signed_off_id}
                 }},
-                'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_off'}]
+                'triggers': [{'type': '.workflows.triggers.event_listener_trigger',
+                              'subscribe_to': 'device_signed_off'}]
             }
         ]
 

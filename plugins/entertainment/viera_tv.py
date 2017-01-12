@@ -69,9 +69,13 @@ class VieraTv(PluginBase):
         if not self.get_power_status():
             self.toggle_power()
 
+            self._apply('tv_turned_on', {})
+
     def power_off(self):
         if self.get_power_status():
             self.toggle_power()
+
+            self._apply('tv_turned_off', {})
 
     def switch_hdmi_input_to(self, hdmi):
         self._send_request('NRC_HDMI%s-ONOFF' % hdmi)

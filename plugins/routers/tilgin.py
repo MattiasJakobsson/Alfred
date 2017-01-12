@@ -62,7 +62,7 @@ class TilginRouter(PluginBase):
 
         return ips[0] if len(ips) > 0 else ''
 
-    def get_is_device_online(self, mac_address):
+    def is_device_online(self, mac_address):
         devices = self.get_active_devices()
 
         return mac_address in [item['mac'] for item in devices]

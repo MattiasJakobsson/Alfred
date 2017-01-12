@@ -14,14 +14,17 @@ database_manager = DatabaseManager()
 def get_available_commands(cls):
     return [{'command': item[0], 'parameters': [p for p in list(inspect.signature(item[1]).parameters) if p != 'self']}
             for item in inspect.getmembers(cls)
-            if not item[0].startswith('get_') and not item[0] == 'apply_history'
+            if not item[0].startswith('get_')
+            and not item[0].startswith('is_')
+            and not item[0] == 'apply_history'
+            and not item[0] == 'get_automations'
             and not item[0].startswith('_')]
 
 
 def get_available_queries(cls):
     return [{'query': item[0], 'parameters': [p for p in list(inspect.signature(item[1]).parameters) if p != 'self']}
             for item in inspect.getmembers(cls)
-            if item[0].startswith('get_')]
+            if item[0].startswith('get_') or item[0].startswith('is_')]
 
 
 def get_available_plugins():

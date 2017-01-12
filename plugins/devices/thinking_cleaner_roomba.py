@@ -49,6 +49,9 @@ class ThinkingCleanerRoomba(PluginBase):
             else:
                 self._apply('cleaner_stopped_cleaning', {})
 
+    def is_cleaning(self):
+        return self._state['cleaning']
+
     def get_automations(self):
         return [{
             'definition': {'initial_step': {
