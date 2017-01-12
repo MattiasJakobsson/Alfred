@@ -41,19 +41,21 @@ def execute_workflow_step(workflow_id, step_id, data):
 
     step = get_step(step_definition)
 
-    result = step.execute(step_definition, data['state'])
+    def step_executed(result):
+        state = copy.deepcopy(data['state'])
 
-    state = copy.deepcopy(data['state'])
+        state[step_definition['id']] = result
 
-    state[step_definition['id']] = result
+        publish_event('workflow_step_executed', {
+            'workflow_id': workflow_id,
+            'workflow_instance_id': data['workflow_instance_id'],
+            'next_step': result['next_step'] if result and 'next_step' in result
+            else step_definition['children'][0]['id']
+            if 'children' in step_definition and len(step_definition['children']) > 0 else None,
+            'state': state
+        })
 
-    publish_event('workflow_step_executed', {
-        'workflow_id': workflow_id,
-        'workflow_instance_id': data['workflow_instance_id'],
-        'next_step': result['next_step'] if result and 'next_step' in result else step_definition['children'][0]['id']
-        if 'children' in step_definition and len(step_definition['children']) > 0 else None,
-        'state': state
-    })
+    step.execute(step_definition, data['state'], step_executed)
 
 
 def bootstrap():
