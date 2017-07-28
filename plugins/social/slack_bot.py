@@ -30,12 +30,9 @@ class SlackMessageReceiverThread(Thread):
 
         while self._running:
             new_messages = [m for m in self._client.rtm_read() if m['type'] == 'message']
-            print(new_messages)
+
             for message in new_messages:
-                self._message_arrived('slack_message_received', {
-                    'message': message['text'],
-                    'from': message['user']
-                })
+                self._message_arrived(message)
 
             time.sleep(1)
 
@@ -59,7 +56,13 @@ class SlackBot(PluginBase):
     def start_receiving_messages(self):
         client = self._get_client()
 
-        thread = SlackMessageReceiverThread(client, self._apply)
+        def apply_new_message(message):
+            self._apply('slack_message_received', {
+                    'message': message['text'],
+                    'from': message['user']
+                })
+
+        thread = SlackMessageReceiverThread(client, apply_new_message)
 
         message_receivers[self._plugin_id] = thread
 
