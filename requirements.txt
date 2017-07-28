@@ -11,3 +11,4 @@ tinydb
 beaker
 apscheduler
 aiohttp
+slackclient

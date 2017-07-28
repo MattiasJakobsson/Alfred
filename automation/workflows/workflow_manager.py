@@ -3,6 +3,8 @@ import copy
 from data_access.database_manager import DatabaseManager
 import importlib
 import uuid
+import logging
+from ..scheduler import shut_down as shut_down_scheduler
 
 
 database_manager = DatabaseManager()
@@ -36,12 +38,17 @@ def get_step(step_definition):
 
 
 def execute_workflow_step(workflow_id, step_id, data):
+    logging.info('Starting to execute workflowstep "%s" for workflow "%s"' % (step_id, workflow_id))
+
     workflow = get_workflow_definition(workflow_id)
     step_definition = get_step_definition(workflow, step_id)
 
     step = get_step(step_definition)
 
     def step_executed(result):
+        logging.info('Workflowstep "%s" for workflow "%s" executed with result: %s' %
+                     (step_id, workflow_id, str(result)))
+
         state = copy.deepcopy(data['state'])
 
         state[step_definition['id']] = result
@@ -88,6 +95,16 @@ def bootstrap():
         module.set_up(trigger['workflow_id'], trigger['config'])
 
     publish_event('workflows_started', {})
+
+
+def shut_down():
+    logging.info('Shutting down workflows')
+
+    publish_event('workflows_stopped', {})
+
+    shut_down_scheduler()
+
+    logging.info('Workflows shut down')
 
 
 def define_workflow(workflow_definition, triggers):
