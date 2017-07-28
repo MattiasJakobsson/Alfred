@@ -27,7 +27,7 @@ def get_available_queries(cls):
             if item[0].startswith('get_') or item[0].startswith('is_')]
 
 
-def get_available_plugins():
+def get_all_plugin_modules():
     plugin_path = dirname(__file__)
 
     directories = [item for item in glob.glob('%s/*/' % plugin_path) if '__pycache__' not in item]
@@ -47,13 +47,56 @@ def get_available_plugins():
 
         module = importlib.import_module(name, package='plugins')
 
-        settings = module.get_available_settings() if hasattr(module, 'get_available_settings') else []
-        plugin_type = module.get_type()
+        result.append({'name': name, 'module': module})
 
-        result.append({'type': name, 'settings': settings, 'commands': get_available_commands(plugin_type),
+    return result
+
+
+def get_available_plugins():
+    modules = get_all_plugin_modules()
+
+    result = []
+
+    for module in modules:
+        settings = module['module'].get_available_settings() if hasattr(module['module'], 'get_available_settings') \
+            else []
+
+        plugin_type = module['module'].get_type()
+
+        result.append({'type': module['name'], 'settings': settings, 'commands': get_available_commands(plugin_type),
                        'queries': get_available_queries(plugin_type)})
 
     return result
+
+
+def auto_detect_plugins():
+    current_plugins = database_manager.get_all('plugins')
+
+    modules = get_all_plugin_modules()
+
+    for module in modules:
+        if not hasattr(module['module'], 'auto_detect'):
+            continue
+
+        current_module_plugins = [SettingsManager(plugin['settings']) for plugin in current_plugins
+                                  if plugin['type'] == module['name']]
+
+        new_plugins = module['module'].auto_detect(current_module_plugins)
+
+        for plugin in new_plugins:
+            add_plugin({
+                'type': module['name'],
+                'settings': plugin['settings'],
+                'title': plugin['title']
+            })
+
+
+def add_plugin(plugin):
+    result = database_manager.insert('plugins', plugin)
+
+    added_plugin = database_manager.get_by_id('plugins', result)
+
+    bootstrap_plugin(added_plugin)
 
 
 def build_plugin_data(plugin):

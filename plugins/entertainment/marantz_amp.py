@@ -3,6 +3,38 @@ from xml.etree import ElementTree
 from plugins.plugin_base import PluginBase
 import uuid
 
+"""AVReciever.Sources = {
+  GAME: "GAME",
+  CBL_SAT: "SAT/CBL",
+  NETWORK: "NET",
+  USB: "USB/IPOD",
+  TUNER: "TUNER",
+  DVD: "DVD",
+  BLUERAY: "BD",
+  HD_RADIO: "HDRADIO",
+  AUX1: "AUX1",
+  AUX2: "AUX2",
+  MEDIA_PLAYER: "MPLAY",
+  TV: "TV",
+  PHONO: "PHONO",
+  INTERNET_RADIO: "IRADIO",
+  MXPORT: "M-XPORT",
+  NETHOME: "NETHOME"
+};
+
+AVReciever.SurroundModes = {
+  MOVIE: "MOVIE",
+  MUSIC: "MUSIC",
+  GAME: "GAME",
+  PURE_DIRECT: "PURE DIRECT",
+  DIRECT: "DIRECT",
+  STEREO: "STEREO",
+  STANDARD: "STANDARD",
+  SIMULATION: "SIMULATION",
+  AUTO: "AUTO",
+  LEFT: "LEFT"
+};"""
+
 
 def get_available_settings():
     return ['ip_address']
@@ -15,7 +47,8 @@ def get_type():
 class MarantzAmp(PluginBase):
     def __init__(self, plugin_id, settings_manager):
         super().__init__(plugin_id, settings_manager,
-                         default_state={'current_states': {'muted': False, 'power': False}})
+                         default_state={'current_states': {'muted': False, 'power': False, 'source': '',
+                                                           'surround_mode': ''}})
 
     def _send_command(self, command):
         body = 'cmd0=%s' % command
@@ -35,8 +68,10 @@ class MarantzAmp(PluginBase):
 
         power = root.find('Power').find('value').text == 'ON'
         muted = root.find('Mute').find('value').text == 'ON'
+        source = root.find('InputFuncSelect').find('value').text
+        surround_mode = root.find('selectSurround').find('value').text
 
-        return {'power': power, 'muted': muted}
+        return {'power': power, 'muted': muted, 'source': source, 'surround_mode': surround_mode}
 
     def toggle_power(self):
         status = self._get_status()
@@ -65,6 +100,12 @@ class MarantzAmp(PluginBase):
 
     def muted_off(self):
         self._send_command('PutVolumeMute/OFF')
+
+    def change_source(self, new_source):
+        self._send_command('PutZone_InputFunction/%s' % new_source)
+
+    def change_surround_mode(self, new_mode):
+        self._send_command('PutSurroundMode/%s' % new_mode)
 
     def get_power_status(self):
         status = self._get_status()

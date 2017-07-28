@@ -87,6 +87,8 @@ def bootstrap():
 
         module.set_up(trigger['workflow_id'], trigger['config'])
 
+    publish_event('workflows_started', {})
+
 
 def define_workflow(workflow_definition, triggers):
     workflow_id = database_manager.insert('workflows', workflow_definition)

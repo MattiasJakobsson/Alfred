@@ -1,5 +1,5 @@
-from plugins.plugin_manager import get_available_plugins, execute_command, get_query_result, bootstrap_plugin, \
-    build_plugin_data
+from plugins.plugin_manager import get_available_plugins, execute_command, get_query_result, add_plugin, \
+    build_plugin_data, auto_detect_plugins
 import json
 from data_access.database_manager import DatabaseManager
 
@@ -9,11 +9,20 @@ def bootstrap(application):
     plugin_command = PluginCommand()
     plugin_query = PluginQuery()
     available_plugins = AvailablePlugins()
+    auto_detect = AutoDetect()
 
     application.add_route('/plugins', plugin_list)
     application.add_route('/plugins/{plugin_id}/commands/{command}', plugin_command)
     application.add_route('/plugins/{plugin_id}/queries/{query}', plugin_query)
     application.add_route('/plugins/available', available_plugins)
+    application.add_route('/plugins/autodetect', auto_detect)
+
+
+class AutoDetect:
+    def on_post(self, req, resp):
+        auto_detect_plugins()
+
+        resp.body = json.dumps({'success': True})
 
 
 class AvailablePlugins:
@@ -45,11 +54,7 @@ class PluginList:
             'title': plugin_data['title']
         }
 
-        result = self.db_manager.insert('plugins', plugin)
-
-        added_plugin = self.db_manager.get_by_id('plugins', result)
-
-        bootstrap_plugin(added_plugin)
+        add_plugin(plugin)
 
         resp.body = json.dumps({'success': True})
 
