@@ -2,7 +2,6 @@ from waitress import serve
 from api.app import configure
 import automation.workflows.workflow_manager
 import logging
-import threading
 
 
 logging.basicConfig(level=logging.INFO)

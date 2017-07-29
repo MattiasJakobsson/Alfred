@@ -95,7 +95,7 @@ class TilginRouter(PluginBase):
                 'command': 'update_state',
                 'parameters': {}
             }},
-            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 10}]
+            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 60}]
         }]
 
     def _on_device_signed_on(self, event_data):

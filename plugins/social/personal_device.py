@@ -27,7 +27,7 @@ class PersonalDevice(PluginBase):
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'handle_device_signed_on',
-                'parameters': {'event_data': '[??state["%s"]??]' % signed_on_id}
+                'parameters': {'event_data': '[??state["initial_state"]["data"]??]'}
             }},
             'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_on'}]
         },
@@ -37,7 +37,7 @@ class PersonalDevice(PluginBase):
                     'type': '.workflows.steps.execute_plugin_command',
                     'plugin_id': self._plugin_id,
                     'command': 'handle_device_signed_off',
-                    'parameters': {'event_data': '[??state["%s"]??]' % signed_off_id}
+                    'parameters': {'event_data': '[??state["initial_state"]["data"]??]'}
                 }},
                 'triggers': [{'type': '.workflows.triggers.event_listener_trigger',
                               'subscribe_to': 'device_signed_off'}]

@@ -1,12 +1,7 @@
 from plugins.plugin_base import PluginBase
 from slackclient import SlackClient
-from threading import Thread
 import time
 import uuid
-import logging
-
-
-message_receivers = {}
 
 
 def get_available_settings():
@@ -17,22 +12,23 @@ def get_type():
     return SlackBot
 
 
-class SlackMessageReceiverThread(Thread):
-    def __init__(self, client, message_arrived):
-        super(SlackMessageReceiverThread, self).__init__()
+class SlackMessageReceiver:
+    def __init__(self, api_token):
+        self._api_token = api_token
+        self._running = False
 
-        self._client = client
+    def start(self, trigger):
+        slack_client = SlackClient(self._api_token)
+
+        slack_client.rtm_connect()
+
         self._running = True
-        self._message_arrived = message_arrived
-
-    def start(self):
-        self._client.rtm_connect()
 
         while self._running:
-            new_messages = [m for m in self._client.rtm_read() if m['type'] == 'message']
+            new_messages = [m for m in slack_client.rtm_read() if m['type'] == 'message' and 'user' in m]
 
             for message in new_messages:
-                self._message_arrived(message)
+                trigger(message)
 
             time.sleep(1)
 
@@ -49,51 +45,35 @@ class SlackBot(PluginBase):
         client = self._get_client()
 
         client.api_call('chat.postMessage',
-                        channel='#%s' % channel,
+                        channel=channel,
                         text=message,
                         parse='full')
 
-    def start_receiving_messages(self):
-        client = self._get_client()
-
-        def apply_new_message(message):
-            self._apply('slack_message_received', {
-                    'message': message['text'],
-                    'from': message['user']
-                })
-
-        thread = SlackMessageReceiverThread(client, apply_new_message)
-
-        message_receivers[self._plugin_id] = thread
-
-    def stop_receiving_messages(self):
-        if self._plugin_id in message_receivers:
-            logging.info('Shutting down slack bot background thread')
-            message_receivers[self._plugin_id].stop()
-
-            del message_receivers[self._plugin_id]
+    def receive_new_message(self, text, user, channel):
+        self._apply('slack_message_received', {
+            'message': text,
+            'from': user,
+            'channel': channel
+        })
 
     def get_automations(self):
-        self.start_receiving_messages()
-
         return [{
             'definition': {'initial_step': {
                 'id': str(uuid.uuid4()),
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
-                'command': 'start_receiving_messages',
-                'parameters': {}
+                'command': 'receive_new_message',
+                'parameters': {
+                    'text': '[??state["initial_state"]["text"] if "text" in state["initial_state"] else ""??]',
+                    'user': '[??state["initial_state"]["user"] if "user" in state["initial_state"] else ""??]',
+                    'channel': '[??state["initial_state"]["channel"] if "channel" in state["initial_state"] else ""??]'
+                }
             }},
-            'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'workflows_started'}]
-        }, {
-            'definition': {'initial_step': {
-                'id': str(uuid.uuid4()),
-                'type': '.workflows.steps.execute_plugin_command',
-                'plugin_id': self._plugin_id,
-                'command': 'stop_receiving_messages',
-                'parameters': {}
-            }},
-            'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'workflows_stopped'}]
+            'triggers': [{'type': '.workflows.triggers.background_task_trigger',
+                          'task': 'plugins.social.slack_bot.SlackMessageReceiver',
+                          'parameters': {
+                              'api_token': self._get_setting('api_token')
+                          }}]
         }]
 
     def _get_client(self):

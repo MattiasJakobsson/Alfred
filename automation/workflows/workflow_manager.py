@@ -4,7 +4,6 @@ from data_access.database_manager import DatabaseManager
 import importlib
 import uuid
 import logging
-from ..scheduler import shut_down as shut_down_scheduler
 
 
 database_manager = DatabaseManager()
@@ -62,6 +61,8 @@ def execute_workflow_step(workflow_id, step_id, data):
             'state': state
         })
 
+    logging.info('Going to execute workflowstep %s with state %s' % (step_id, str(data['state'])))
+
     step.execute(step_definition, data['state'], step_executed)
 
 
@@ -80,7 +81,7 @@ def bootstrap():
 
         step_id = workflow['initial_step']['id']
 
-        initial_state = {step_id: data['initial_state']}
+        initial_state = {step_id: data['initial_state'], 'initial_state': data['initial_state']}
 
         execute_workflow_step(workflow_id, step_id, {'workflow_instance_id': str(uuid.uuid4()), 'state': initial_state})
 
@@ -101,8 +102,6 @@ def shut_down():
     logging.info('Shutting down workflows')
 
     publish_event('workflows_stopped', {})
-
-    shut_down_scheduler()
 
     logging.info('Workflows shut down')
 
