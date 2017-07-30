@@ -6,6 +6,7 @@ from os.path import relpath
 from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
 from automation.workflows.workflow_manager import define_workflow
+import six
 
 
 database_manager = DatabaseManager()
@@ -17,14 +18,14 @@ def get_available_commands(cls):
             if not item[0].startswith('get_')
             and not item[0].startswith('is_')
             and not item[0] == 'apply_history'
-            and not item[0] == 'get_automations'
             and not item[0].startswith('_')]
 
 
 def get_available_queries(cls):
     return [{'query': item[0], 'parameters': [p for p in list(inspect.signature(item[1]).parameters) if p != 'self']}
             for item in inspect.getmembers(cls)
-            if item[0].startswith('get_') or item[0].startswith('is_')]
+            if (item[0].startswith('get_') or item[0].startswith('is_'))
+            and not item[0] == 'get_automations']
 
 
 def get_all_plugin_modules():
@@ -124,7 +125,8 @@ def bootstrap_plugin(plugin):
 
 
 def _get_plugin_instance(plugin_id):
-    plugin = database_manager.get_by_id('plugins', plugin_id)
+    plugin = database_manager.get_by_id('plugins', plugin_id) if not isinstance(plugin_id, six.string_types) \
+        else database_manager.get_by_condition('plugins', lambda item: item['title'] == plugin_id)
 
     module = importlib.import_module(plugin['type'], package='plugins')
 

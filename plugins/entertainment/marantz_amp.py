@@ -3,38 +3,6 @@ from xml.etree import ElementTree
 from plugins.plugin_base import PluginBase
 import uuid
 
-"""AVReciever.Sources = {
-  GAME: "GAME",
-  CBL_SAT: "SAT/CBL",
-  NETWORK: "NET",
-  USB: "USB/IPOD",
-  TUNER: "TUNER",
-  DVD: "DVD",
-  BLUERAY: "BD",
-  HD_RADIO: "HDRADIO",
-  AUX1: "AUX1",
-  AUX2: "AUX2",
-  MEDIA_PLAYER: "MPLAY",
-  TV: "TV",
-  PHONO: "PHONO",
-  INTERNET_RADIO: "IRADIO",
-  MXPORT: "M-XPORT",
-  NETHOME: "NETHOME"
-};
-
-AVReciever.SurroundModes = {
-  MOVIE: "MOVIE",
-  MUSIC: "MUSIC",
-  GAME: "GAME",
-  PURE_DIRECT: "PURE DIRECT",
-  DIRECT: "DIRECT",
-  STEREO: "STEREO",
-  STANDARD: "STANDARD",
-  SIMULATION: "SIMULATION",
-  AUTO: "AUTO",
-  LEFT: "LEFT"
-};"""
-
 
 def get_available_settings():
     return ['ip_address']

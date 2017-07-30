@@ -37,3 +37,9 @@ class DatabaseManager:
             table = self.db.table(category)
 
             return table.get(eid=eid)
+
+    def get_by_condition(self, category, cond):
+        with lock:
+            table = self.db.table(category)
+
+            return table.get(cond=cond)

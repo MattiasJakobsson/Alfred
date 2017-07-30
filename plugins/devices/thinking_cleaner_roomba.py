@@ -19,6 +19,9 @@ class ThinkingCleanerRoomba(PluginBase):
     def get_status(self):
         return json.loads(requests.get('http://%s/status.json' % self._get_setting('ip')).text)['status']
 
+    def get_full_status(self):
+        return json.loads(requests.get('http://%s/full_status.json' % self._get_setting('ip')).text)
+
     def start_cleaning(self):
         requests.get('http://%s/command.json?command=clean' % self._get_setting('ip'))
 
@@ -61,14 +64,14 @@ class ThinkingCleanerRoomba(PluginBase):
                 'command': 'update_state',
                 'parameters': {}
             }},
-            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 10}]
+            'triggers': [{'type': '.workflows.triggers.interval_trigger', 'interval': 60}]
         }]
 
     def _on_cleaner_changed_state(self, event_data):
         self._state['cleaner_state'] = event_data['new_state']
 
-    def _on_cleaner_started_cleaning(self, event_data):
+    def _on_cleaner_started_cleaning(self, _):
         self._state['cleaning'] = True
 
-    def _on_cleaner_stopped_cleaning(self, event_data):
+    def _on_cleaner_stopped_cleaning(self, _):
         self._state['cleaning'] = False

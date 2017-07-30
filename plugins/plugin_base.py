@@ -3,7 +3,10 @@ from data_access.database_manager import DatabaseManager
 
 
 class PluginBase:
-    def __init__(self, plugin_id, settings_manager, default_state={}):
+    def __init__(self, plugin_id, settings_manager, default_state=None):
+        if default_state is None:
+            default_state = {}
+
         self._plugin_id = plugin_id
         self._settings_manager = settings_manager
         self._state = default_state
