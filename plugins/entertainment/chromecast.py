@@ -111,8 +111,8 @@ class ChromecastDevice(PluginBase):
                           }}]
         }]
 
-    def _on_cast_started_casting(self, event_data):
+    def _on_cast_started_casting(self, _):
         self._state['current_states']['is_playing'] = True
 
-    def _on_cast_stopped_casting(self, event_data):
+    def _on_cast_stopped_casting(self, _):
         self._state['current_states']['is_playing'] = False
