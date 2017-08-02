@@ -42,7 +42,7 @@ def set_up(workflow_id, data):
     subscription = subscribe('workflows_stopped', stop_task)
 
     def dispose():
-        subscription.dispose()
+        subscription['dispose']()
         background_task.stop_task()
 
     return {

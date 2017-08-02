@@ -152,7 +152,7 @@ def bootstrap():
         bootstrap_plugin(plugin)
 
 
-def _get_plugin_instance(plugin_id):
+def get_plugin(plugin_id):
     plugin = database_manager.get_by_id('plugins', plugin_id) if not isinstance(plugin_id, str) \
         else database_manager.get_by_condition('plugins', lambda item: item['title'] == plugin_id)
 
@@ -168,12 +168,8 @@ def _get_plugin_instance(plugin_id):
     return instance
 
 
-def get_plugin(plugin_id):
-    return _get_plugin_instance(plugin_id)
-
-
 def execute_command(plugin_id, command, parameters):
-    plugin_instance = _get_plugin_instance(plugin_id)
+    plugin_instance = get_plugin(plugin_id)
 
     method = getattr(plugin_instance, command)
 
@@ -184,7 +180,7 @@ def execute_command(plugin_id, command, parameters):
 
 
 def get_query_result(plugin_id, query, parameters):
-    plugin_instance = _get_plugin_instance(plugin_id)
+    plugin_instance = get_plugin(plugin_id)
 
     method = getattr(plugin_instance, query)
 

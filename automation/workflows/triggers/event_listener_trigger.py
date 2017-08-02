@@ -13,5 +13,5 @@ def set_up(workflow_id, data):
     subscription = subscribe(event_name, start_workflow)
 
     return {
-        'dispose': lambda: subscription.dispose()
+        'dispose': lambda: subscription['dispose']()
     }
