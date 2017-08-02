@@ -1,9 +1,12 @@
 from plugins.parameter_handler import run_python_code
+from plugins.plugin_manager import get_plugin, get_query_result
 import logging
 
 
 def execute(config, state, step_executed):
-    if_result = run_python_code(config['if_statement'], local_dict={'state': state}) == "True"
+    if_result = run_python_code(config['if_statement'], local_dict={'state': state,
+                                                                    'get_plugin': get_plugin,
+                                                                    'query': get_query_result}) == "True"
 
     logging.info('If statement "%s" executed with result %s for data %s' %
                  (config['if_statement'], str(if_result), str({'state': state})))

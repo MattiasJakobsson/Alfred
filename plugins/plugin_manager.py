@@ -5,11 +5,11 @@ import glob
 from os.path import relpath
 from data_access.database_manager import DatabaseManager
 from plugins.parameter_handler import run_python_code
-from automation.workflows.workflow_manager import define_workflow
-import six
+from automation.workflows.workflow_manager import define_workflow, remove_workflow
 
 
 database_manager = DatabaseManager()
+plugin_workflows = {}
 
 
 def get_available_commands(cls):
@@ -46,9 +46,9 @@ def get_all_plugin_modules():
         path = dirname(relpath(plugin, plugin_path))
         name = '.%s.%s' % (path.replace('\\', '.'), basename(plugin)[:-3])
 
-        module = importlib.import_module(name, package='plugins')
+        plugin_module = importlib.import_module(name, package='plugins')
 
-        result.append({'name': name, 'module': module})
+        result.append({'name': name, 'module': plugin_module})
 
     return result
 
@@ -58,13 +58,15 @@ def get_available_plugins():
 
     result = []
 
-    for module in modules:
-        settings = module['module'].get_available_settings() if hasattr(module['module'], 'get_available_settings') \
-            else []
+    for plugin_module in modules:
+        settings = plugin_module['module'].get_available_settings() \
+            if hasattr(plugin_module['module'], 'get_available_settings') else []
 
-        plugin_type = module['module'].get_type()
+        plugin_type = plugin_module['module'].get_type()
 
-        result.append({'type': module['name'], 'settings': settings, 'commands': get_available_commands(plugin_type),
+        result.append({'type': plugin_module['name'],
+                       'settings': settings,
+                       'commands': get_available_commands(plugin_type),
                        'queries': get_available_queries(plugin_type)})
 
     return result
@@ -75,18 +77,18 @@ def auto_detect_plugins():
 
     modules = get_all_plugin_modules()
 
-    for module in modules:
-        if not hasattr(module['module'], 'auto_detect'):
+    for plugin_module in modules:
+        if not hasattr(plugin_module['module'], 'auto_detect'):
             continue
 
         current_module_plugins = [SettingsManager(plugin['settings']) for plugin in current_plugins
-                                  if plugin['type'] == module['name']]
+                                  if plugin['type'] == plugin_module['name']]
 
-        new_plugins = module['module'].auto_detect(current_module_plugins)
+        new_plugins = plugin_module['module'].auto_detect(current_module_plugins)
 
         for plugin in new_plugins:
             add_plugin({
-                'type': module['name'],
+                'type': plugin_module['name'],
                 'settings': plugin['settings'],
                 'title': plugin['title']
             })
@@ -99,11 +101,25 @@ def add_plugin(plugin):
 
     bootstrap_plugin(added_plugin)
 
+    return result
+
+
+def remove_plugin(plugin_id):
+    if isinstance(plugin_id, str):
+        plugin_id = database_manager.get_by_condition('plugins', lambda item: item['title'] == plugin_id).eid
+
+    workflows = plugin_workflows[plugin_id] if plugin_id in plugin_workflows else []
+
+    for workflow_id in workflows:
+        remove_workflow(workflow_id)
+
+    database_manager.delete('plugins', plugin_id)
+
 
 def build_plugin_data(plugin):
-    module = importlib.import_module(plugin['type'], package='plugins')
+    plugin_module = importlib.import_module(plugin['type'], package='plugins')
 
-    plugin_type = module.get_type()
+    plugin_type = plugin_module.get_type()
 
     return {
         'id': plugin.eid,
@@ -115,26 +131,45 @@ def build_plugin_data(plugin):
 
 
 def bootstrap_plugin(plugin):
-    module = importlib.import_module(plugin['type'], package='plugins')
+    plugin_module = importlib.import_module(plugin['type'], package='plugins')
 
-    instance = module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
+    instance = plugin_module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
 
     if hasattr(instance, 'get_automations'):
         for automation in instance.get_automations():
-            define_workflow(automation['definition'], automation['triggers'])
+            workflow_id = define_workflow(automation['definition'], automation['triggers'], store=False)
+
+            if plugin.eid in plugin_workflows:
+                plugin_workflows[plugin.eid] += [workflow_id]
+            else:
+                plugin_workflows[plugin.eid] = [workflow_id]
+
+
+def bootstrap():
+    plugins = database_manager.get_all('plugins')
+
+    for plugin in plugins:
+        bootstrap_plugin(plugin)
 
 
 def _get_plugin_instance(plugin_id):
-    plugin = database_manager.get_by_id('plugins', plugin_id) if not isinstance(plugin_id, six.string_types) \
+    plugin = database_manager.get_by_id('plugins', plugin_id) if not isinstance(plugin_id, str) \
         else database_manager.get_by_condition('plugins', lambda item: item['title'] == plugin_id)
 
-    module = importlib.import_module(plugin['type'], package='plugins')
+    if plugin is None:
+        return None
 
-    instance = module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
+    plugin_module = importlib.import_module(plugin['type'], package='plugins')
+
+    instance = plugin_module.get_type()(plugin.eid, SettingsManager(plugin['settings']))
 
     instance.apply_history(plugin['state'] if 'state' in plugin else None)
 
     return instance
+
+
+def get_plugin(plugin_id):
+    return _get_plugin_instance(plugin_id)
 
 
 def execute_command(plugin_id, command, parameters):
@@ -164,5 +199,5 @@ class SettingsManager:
         self.settings = settings
 
     def get_setting(self, setting):
-        return run_python_code(self.settings[setting], local_dict={'get_plugin': _get_plugin_instance,
+        return run_python_code(self.settings[setting], local_dict={'get_plugin': get_plugin,
                                                                    'query': get_query_result})

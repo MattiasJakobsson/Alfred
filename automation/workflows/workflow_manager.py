@@ -7,10 +7,13 @@ import logging
 
 
 database_manager = DatabaseManager()
+in_memory_workflows = {}
+active_triggers = []
 
 
 def get_workflow_definition(workflow_id):
-    return database_manager.get_by_id('workflows', workflow_id)
+    return in_memory_workflows[workflow_id] if workflow_id in in_memory_workflows \
+        else database_manager.get_by_id('workflows', workflow_id)
 
 
 def get_step_definition(workflow, step_id):
@@ -91,9 +94,9 @@ def bootstrap():
     triggers = database_manager.get_all('workflow_triggers')
 
     for trigger in triggers:
-        module = importlib.import_module(trigger['config']['type'], package='automation')
+        trigger_module = importlib.import_module(trigger['config']['type'], package='automation')
 
-        module.set_up(trigger['workflow_id'], trigger['config'])
+        trigger_module.set_up(trigger['workflow_id'], trigger['config'])
 
     publish_event('workflows_started', {})
 
@@ -106,15 +109,53 @@ def shut_down():
     logging.info('Workflows shut down')
 
 
-def define_workflow(workflow_definition, triggers):
-    workflow_id = database_manager.insert('workflows', workflow_definition)
+def define_workflow(workflow_definition, triggers, store=True):
+    def add_in_memory_workflow(definition):
+        new_workflow_id = str(uuid.uuid4())
+
+        in_memory_workflows[new_workflow_id] = definition
+
+        return new_workflow_id
+
+    workflow_id = database_manager.insert('workflows', workflow_definition) if store \
+        else add_in_memory_workflow(workflow_definition)
 
     for trigger in triggers:
-        database_manager.insert('workflow_triggers', {
+        trigger_id = ''
+
+        if store:
+            trigger_id = database_manager.insert('workflow_triggers', {
+                'workflow_id': workflow_id,
+                'config': trigger
+            })
+
+        trigger_module = importlib.import_module(trigger['type'], package='automation')
+
+        trigger_instance = trigger_module.set_up(workflow_id, trigger)
+
+        active_triggers.append({
+            'instance': trigger_instance,
             'workflow_id': workflow_id,
-            'config': trigger
+            'trigger_id': trigger_id
         })
 
-        module = importlib.import_module(trigger['type'], package='automation')
+    return workflow_id
 
-        module.set_up(workflow_id, trigger)
+
+def remove_workflow(workflow_id):
+    stored = workflow_id not in in_memory_workflows
+
+    if stored:
+        database_manager.delete('workflows', workflow_id)
+    else:
+        del in_memory_workflows[workflow_id]
+
+    triggers = [trigger for trigger in active_triggers if trigger['workflow_id'] == workflow_id]
+
+    for trigger in triggers:
+        trigger['instance']['dispose']()
+
+        active_triggers.remove(trigger)
+
+        if stored:
+            database_manager.delete('workflow_triggers', trigger['trigger_id'])

@@ -1,6 +1,7 @@
 from waitress import serve
 from api.app import configure
 import automation.workflows.workflow_manager
+import plugins.plugin_manager
 import logging
 
 
@@ -9,6 +10,8 @@ logging.basicConfig(level=logging.INFO)
 logging.info('Starting application')
 
 automation.workflows.workflow_manager.bootstrap()
+
+plugins.plugin_manager.bootstrap()
 
 api = configure()
 
