@@ -3,8 +3,10 @@ from plugins.parameter_handler import run_python_code
 
 
 def execute(config, state, step_executed):
-    plugin_id = config['plugin_id']
-    query = config['query']
+    plugin_id = run_python_code(config['plugin_id'], local_dict={'state': state}) \
+        if isinstance(config['plugin_id'], str) else config['plugin_id']
+
+    query = run_python_code(config['query'], local_dict={'state': state})
     parameter_patterns = config['parameters'] if 'parameters' in config else {}
 
     parameters = {}

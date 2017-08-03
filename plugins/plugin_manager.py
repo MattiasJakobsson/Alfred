@@ -168,6 +168,13 @@ def get_plugin(plugin_id):
     return instance
 
 
+def get_plugin_type(plugin_id):
+    plugin = database_manager.get_by_id('plugins', plugin_id) if not isinstance(plugin_id, str) \
+        else database_manager.get_by_condition('plugins', lambda item: item['title'] == plugin_id)
+
+    return plugin['type'] if plugin is not None and 'type' in plugin else None
+
+
 def execute_command(plugin_id, command, parameters):
     plugin_instance = get_plugin(plugin_id)
 

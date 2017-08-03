@@ -1,7 +1,6 @@
 from plugins.plugin_base import PluginBase
 import requests
 import json
-import uuid
 
 
 def get_available_settings():
@@ -47,7 +46,7 @@ class ThinkingCleanerRoomba(PluginBase):
             self._apply('cleaner_changed_state', {'new_state': self._state['cleaner_state']})
 
         if self._state['cleaning'] != active_states['cleaning']:
-            if active_states['cleaning']:
+            if active_states['cleaning'] == "1":
                 self._apply('cleaner_started_cleaning', {})
             else:
                 self._apply('cleaner_stopped_cleaning', {})
@@ -58,7 +57,7 @@ class ThinkingCleanerRoomba(PluginBase):
     def get_automations(self):
         return [{
             'definition': {'initial_step': {
-                'id': str(uuid.uuid4()),
+                'id': 'update_roomba_state',
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'update_state',

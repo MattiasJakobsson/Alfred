@@ -76,6 +76,8 @@ def bootstrap():
 
         if step_id:
             execute_workflow_step(workflow_id, step_id, data)
+        else:
+            publish_event('workflow_finished', {'state': data['state']})
 
     def start_workflow(data):
         workflow_id = data['workflow_id']
@@ -86,7 +88,8 @@ def bootstrap():
 
         initial_state = {step_id: data['initial_state'], 'initial_state': data['initial_state']}
 
-        execute_workflow_step(workflow_id, step_id, {'workflow_instance_id': str(uuid.uuid4()), 'state': initial_state})
+        execute_workflow_step(workflow_id, step_id,
+                              {'workflow_instance_id': str(uuid.uuid4()), 'state': initial_state})
 
     subscribe('workflow_step_executed', execute_next_step)
     subscribe('new_workflow_instance_requested', start_workflow)
@@ -96,7 +99,13 @@ def bootstrap():
     for trigger in triggers:
         trigger_module = importlib.import_module(trigger['config']['type'], package='automation')
 
-        trigger_module.set_up(trigger['workflow_id'], trigger['config'])
+        trigger_instance = trigger_module.set_up(trigger['workflow_id'], trigger['config'])
+
+        active_triggers.append({
+            'instance': trigger_instance,
+            'workflow_id': trigger['workflow_id'],
+            'trigger_id': trigger.eid
+        })
 
     publish_event('workflows_started', {})
 
