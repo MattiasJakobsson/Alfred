@@ -34,7 +34,7 @@ class MyDaemon(deamon.Daemon):
         main()
 
 if __name__ == '__main__':
-    daemon = MyDaemon('/tmp/daemon-example.pid')
+    daemon = MyDaemon('/alfred_deamon.pid')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             daemon.start()
