@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import logging
 from waitress import serve
 import automation.workflows.workflow_manager
