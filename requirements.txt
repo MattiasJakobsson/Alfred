@@ -2,6 +2,7 @@ wit
 lxml
 requests
 falcon
+falcon_cors
 waitress
 bs4
 pychromecast
