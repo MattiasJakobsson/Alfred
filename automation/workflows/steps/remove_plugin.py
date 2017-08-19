@@ -2,6 +2,10 @@ from plugins.parameter_handler import run_python_code
 from plugins.plugin_manager import remove_plugin, get_plugin_type
 
 
+def get_available_settings():
+    return ['plugin_id', 'plugin_type']
+
+
 def execute(config, state, step_executed):
     plugin_id = config['plugin_id']
 

@@ -3,6 +3,10 @@ from plugins.plugin_manager import get_plugin, get_query_result
 import logging
 
 
+def get_available_settings():
+    return ['if_statement', 'true_step', 'false_step']
+
+
 def execute(config, state, step_executed):
     if_result = run_python_code(config['if_statement'], local_dict={'state': state,
                                                                     'get_plugin': get_plugin,

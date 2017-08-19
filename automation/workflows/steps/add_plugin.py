@@ -2,6 +2,10 @@ from plugins.parameter_handler import run_python_code
 from plugins.plugin_manager import add_plugin
 
 
+def get_available_settings():
+    return ['title', 'plugin_type', 'settings']
+
+
 def execute(config, state, step_executed):
     def parse_settings_data(item):
         for k, v in item.items():

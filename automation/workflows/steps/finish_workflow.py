@@ -1,4 +1,3 @@
-from automation.event_publisher import publish_event
 import logging
 
 

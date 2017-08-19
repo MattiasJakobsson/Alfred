@@ -2,6 +2,10 @@ from plugins.parameter_handler import run_python_code
 from automation.event_publisher import publish_event
 
 
+def get_available_settings():
+    return ['event_name', 'event_data']
+
+
 def execute(config, state, step_executed):
     event_name = config['event_name']
     event_data_patterns = config['event_data'] if 'event_data' in config else {}
