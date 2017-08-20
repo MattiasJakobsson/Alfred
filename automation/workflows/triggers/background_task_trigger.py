@@ -4,6 +4,10 @@ import inspect
 from threading import Thread
 
 
+def get_available_settings():
+    return ['task', 'parameters']
+
+
 class BackgroundTask(Thread):
     def __init__(self, task, start_workflow):
         super(BackgroundTask, self).__init__(target=self.start_task)

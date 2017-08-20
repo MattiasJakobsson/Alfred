@@ -1,6 +1,10 @@
 from automation.event_publisher import subscribe, publish_event
 
 
+def get_available_settings():
+    return ['subscribe_to']
+
+
 def set_up(workflow_id, data):
     event_name = data['subscribe_to']
 

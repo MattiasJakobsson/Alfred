@@ -4,7 +4,8 @@ from data_access.database_manager import DatabaseManager
 import importlib
 import uuid
 import logging
-
+from os.path import dirname, basename, isfile, relpath
+import glob
 
 database_manager = DatabaseManager()
 in_memory_workflows = {}
@@ -59,6 +60,7 @@ def execute_workflow_step(workflow_id, step_id, data):
             'workflow_id': workflow_id,
             'workflow_instance_id': data['workflow_instance_id'],
             'next_step': result['next_step'] if result and 'next_step' in result
+            else None if result and '_finished' in result and result['_finished']
             else step_definition['children'][0]['id']
             if 'children' in step_definition and len(step_definition['children']) > 0 else None,
             'state': state
@@ -86,7 +88,7 @@ def bootstrap():
 
         step_id = workflow['initial_step']['id']
 
-        initial_state = {step_id: data['initial_state'], 'initial_state': data['initial_state']}
+        initial_state = {step_id: step_id, 'initial_state': data['initial_state']}
 
         execute_workflow_step(workflow_id, step_id,
                               {'workflow_instance_id': str(uuid.uuid4()), 'state': initial_state})
@@ -168,3 +170,53 @@ def remove_workflow(workflow_id):
 
         if stored:
             database_manager.delete('workflow_triggers', trigger['trigger_id'])
+
+
+def _get_all_child_modules_from(module_name):
+    workflows_path = dirname(__file__)
+
+    modules = glob.glob('%s/%s/*.py' % (workflows_path, module_name))
+
+    items = [f for f in modules if isfile(f)]
+
+    result = []
+
+    for item in items:
+        path = dirname(relpath(item, workflows_path))
+        name = '.%s.%s' % (path.replace('\\', '.'), basename(item)[:-3])
+
+        step_module = importlib.import_module(name, package='automation.workflows')
+
+        result.append({'name': '.workflows%s' % name, 'module': step_module})
+
+    return result
+
+
+def get_available_steps():
+    modules = _get_all_child_modules_from('steps')
+
+    result = []
+
+    for step_module in modules:
+        settings = step_module['module'].get_available_settings() \
+            if hasattr(step_module['module'], 'get_available_settings') else []
+
+        result.append({'type': step_module['name'],
+                       'settings': settings})
+
+    return result
+
+
+def get_available_triggers():
+    modules = _get_all_child_modules_from('triggers')
+
+    result = []
+
+    for step_module in modules:
+        settings = step_module['module'].get_available_settings() \
+            if hasattr(step_module['module'], 'get_available_settings') else []
+
+        result.append({'type': step_module['name'],
+                       'settings': settings})
+
+    return result

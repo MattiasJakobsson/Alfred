@@ -153,8 +153,16 @@ def bootstrap():
 
 
 def get_plugin(plugin_id):
-    plugin = database_manager.get_by_id('plugins', plugin_id) if not isinstance(plugin_id, str) \
-        else database_manager.get_by_condition('plugins', lambda item: item['title'] == plugin_id)
+    def try_parse_int(s, base=10, val=None):
+        try:
+            return int(s, base)
+        except ValueError:
+            return val
+
+    parsed_plugin_id = try_parse_int(str(plugin_id), val=plugin_id)
+
+    plugin = database_manager.get_by_id('plugins', parsed_plugin_id) if not isinstance(parsed_plugin_id, str) \
+        else database_manager.get_by_condition('plugins', lambda item: item['title'] == parsed_plugin_id)
 
     if plugin is None:
         return None
