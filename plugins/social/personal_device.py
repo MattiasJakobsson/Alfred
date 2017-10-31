@@ -70,10 +70,12 @@ class PersonalDevice(PluginBase):
         ]
 
     def handle_device_signed_on(self):
-        self._apply('person_signed_on', self.get_person())
+        if not self._state['is_online']:
+            self._apply('person_signed_on', self.get_person())
 
     def handle_device_signed_off(self):
-        self._apply('person_signed_off', self.get_person())
+        if self._state['is_online']:
+            self._apply('person_signed_off', self.get_person())
 
     def _on_person_signed_on(self, _):
         self._state['is_online'] = True
