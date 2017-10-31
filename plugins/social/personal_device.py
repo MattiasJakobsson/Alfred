@@ -22,7 +22,7 @@ class PersonalDevice(PluginBase):
     def get_automations(self):
         return [{
             'definition': {'initial_step': {
-                'id': 'handle_%s_signed_on' % self._get_setting('name'),
+                'id': 'handle_signed_on',
                 'type': '.workflows.steps.if_statement',
                 'if_statement': '[??state["initial_state"]["data"]["mac"] == "%s"??]'
                                 % self._get_setting('mac_address'),
@@ -39,14 +39,13 @@ class PersonalDevice(PluginBase):
                     {
                         'id': 'finish_workflow',
                         'type': '.workflows.steps.finish_workflow'
-                    }
-                ]
+                    }]
             }},
             'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_on'}]
         },
             {
                 'definition': {'initial_step': {
-                    'id': 'handle_%s_signed_on' % self._get_setting('name'),
+                    'id': 'handle_signed_off',
                     'type': '.workflows.steps.if_statement',
                     'if_statement': '[??state["initial_state"]["data"]["mac"] == "%s"??]'
                                     % self._get_setting('mac_address'),
@@ -63,8 +62,7 @@ class PersonalDevice(PluginBase):
                         {
                             'id': 'finish_workflow',
                             'type': '.workflows.steps.finish_workflow'
-                        }
-                    ]
+                        }]
                 }},
                 'triggers': [{'type': '.workflows.triggers.event_listener_trigger',
                               'subscribe_to': 'device_signed_off'}]
