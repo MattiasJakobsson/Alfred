@@ -23,37 +23,59 @@ class PersonalDevice(PluginBase):
         return [{
             'definition': {'initial_step': {
                 'id': 'handle_%s_signed_on' % self._get_setting('name'),
-                'type': '.workflows.steps.execute_plugin_command',
-                'plugin_id': self._plugin_id,
-                'command': 'handle_device_signed_on',
-                'parameters': {'event_data': '[??state["initial_state"]["data"]??]'}
+                'type': '.workflows.steps.if_statement',
+                'if_statement': '[??state["initial_state"]["data"]["mac"] == "%s"??]'
+                                % self._get_setting('mac_address'),
+                'true_step': 'handle_signed_on',
+                'false_step': 'finish_workflow',
+                'children': [
+                    {
+                        'id': 'handle_signed_on',
+                        'type': '.workflows.steps.execute_plugin_command',
+                        'plugin_id': self._plugin_id,
+                        'command': 'handle_device_signed_on',
+                        'parameters': {}
+                    },
+                    {
+                        'id': 'finish_workflow',
+                        'type': '.workflows.steps.finish_workflow'
+                    }
+                ]
             }},
             'triggers': [{'type': '.workflows.triggers.event_listener_trigger', 'subscribe_to': 'device_signed_on'}]
         },
             {
                 'definition': {'initial_step': {
-                    'id': 'handle_%s_signed_off' % self._get_setting('name'),
-                    'type': '.workflows.steps.execute_plugin_command',
-                    'plugin_id': self._plugin_id,
-                    'command': 'handle_device_signed_off',
-                    'parameters': {'event_data': '[??state["initial_state"]["data"]??]'}
+                    'id': 'handle_%s_signed_on' % self._get_setting('name'),
+                    'type': '.workflows.steps.if_statement',
+                    'if_statement': '[??state["initial_state"]["data"]["mac"] == "%s"??]'
+                                    % self._get_setting('mac_address'),
+                    'true_step': 'handle_signed_off',
+                    'false_step': 'finish_workflow',
+                    'children': [
+                        {
+                            'id': 'handle_signed_off',
+                            'type': '.workflows.steps.execute_plugin_command',
+                            'plugin_id': self._plugin_id,
+                            'command': 'handle_device_signed_off',
+                            'parameters': {}
+                        },
+                        {
+                            'id': 'finish_workflow',
+                            'type': '.workflows.steps.finish_workflow'
+                        }
+                    ]
                 }},
                 'triggers': [{'type': '.workflows.triggers.event_listener_trigger',
                               'subscribe_to': 'device_signed_off'}]
             }
         ]
 
-    def handle_device_signed_on(self, event_data):
-        mac = self._get_setting('mac_address')
+    def handle_device_signed_on(self):
+        self._apply('person_signed_on', self.get_person())
 
-        if mac == event_data['mac']:
-            self._apply('person_signed_on', self.get_person())
-
-    def handle_device_signed_off(self, event_data):
-        mac = self._get_setting('mac_address')
-
-        if mac == event_data['mac']:
-            self._apply('person_signed_off', self.get_person())
+    def handle_device_signed_off(self):
+        self._apply('person_signed_off', self.get_person())
 
     def _on_person_signed_on(self, _):
         self._state['is_online'] = True
