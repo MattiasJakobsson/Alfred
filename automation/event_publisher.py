@@ -26,6 +26,6 @@ def subscribe(event_name, callback):
 
 
 def un_subscribe(subscription_id):
-    item = next([subscription for subscription in subscriptions if subscription['id'] == subscription_id])
+    item = next(subscription for subscription in subscriptions if subscription['id'] == subscription_id)
 
     subscriptions.remove(item)
