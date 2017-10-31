@@ -59,7 +59,7 @@ class SlackBot(PluginBase):
     def get_automations(self):
         return [{
             'definition': {'initial_step': {
-                'id': str(uuid.uuid4()),
+                'id': 'handle_slackbot_message_%s' % str(uuid.uuid4()),
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'receive_new_message',

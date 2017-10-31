@@ -1,6 +1,5 @@
 from plugins.plugin_base import PluginBase
 import pychromecast
-import uuid
 import logging
 
 
@@ -101,7 +100,7 @@ class ChromecastDevice(PluginBase):
     def get_automations(self):
         return [{
             'definition': {'initial_step': {
-                'id': str(uuid.uuid4()),
+                'id': 'update_chromecast_status_for_%s' % self._get_setting('name'),
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'update_status',

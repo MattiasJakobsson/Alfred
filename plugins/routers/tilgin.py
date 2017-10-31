@@ -89,7 +89,7 @@ class TilginRouter(PluginBase):
     def get_automations(self):
         return [{
             'definition': {'initial_step': {
-                'id': str(uuid.uuid4()),
+                'id': 'update_tilgin_router_state',
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'update_state',

@@ -1,5 +1,4 @@
 from plugins.plugin_base import PluginBase
-import uuid
 
 
 def get_available_settings():
@@ -18,12 +17,9 @@ class PersonalDevice(PluginBase):
         return {'name': self._get_setting('name'), 'email': self._get_setting('email')}
 
     def get_automations(self):
-        signed_on_id = str(uuid.uuid4())
-        signed_off_id = str(uuid.uuid4())
-
         return [{
             'definition': {'initial_step': {
-                'id': signed_on_id,
+                'id': 'handle_%s_signed_on' % self._get_setting('name'),
                 'type': '.workflows.steps.execute_plugin_command',
                 'plugin_id': self._plugin_id,
                 'command': 'handle_device_signed_on',
@@ -33,7 +29,7 @@ class PersonalDevice(PluginBase):
         },
             {
                 'definition': {'initial_step': {
-                    'id': signed_off_id,
+                    'id': 'handle_%s_signed_off' % self._get_setting('name'),
                     'type': '.workflows.steps.execute_plugin_command',
                     'plugin_id': self._plugin_id,
                     'command': 'handle_device_signed_off',
