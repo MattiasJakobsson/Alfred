@@ -11,10 +11,13 @@ def get_type():
 
 class PersonalDevice(PluginBase):
     def __init__(self, plugin_id, settings_manager):
-        super().__init__(plugin_id, settings_manager)
+        super().__init__(plugin_id, settings_manager, default_state={'is_online': False})
 
     def get_person(self):
         return {'name': self._get_setting('name'), 'email': self._get_setting('email')}
+
+    def get_online_status(self):
+        return self._state['is_online']
 
     def get_automations(self):
         return [{
@@ -51,3 +54,9 @@ class PersonalDevice(PluginBase):
 
         if mac == event_data['mac']:
             self._apply('person_signed_off', self.get_person())
+
+    def _on_person_signed_on(self, _):
+        self._state['is_online'] = True
+
+    def _on_person_signed_off(self, _):
+        self._state['is_online'] = False
