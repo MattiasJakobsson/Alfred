@@ -43,10 +43,12 @@ class ThinkingCleanerRoomba(PluginBase):
         active_states = self.get_status()
 
         if self._state['cleaner_state'] != active_states['cleaner_state']:
-            self._apply('cleaner_changed_state', {'new_state': self._state['cleaner_state']})
+            self._apply('cleaner_changed_state', {'new_state': active_states['cleaner_state']})
 
-        if self._state['cleaning'] != active_states['cleaning']:
-            if active_states['cleaning'] == "1":
+        is_cleaning = active_states['cleaning'] == "1"
+
+        if self._state['cleaning'] != is_cleaning:
+            if is_cleaning:
                 self._apply('cleaner_started_cleaning', {})
             else:
                 self._apply('cleaner_stopped_cleaning', {})
