@@ -48,7 +48,7 @@ class ChromecastStatusSubscriber:
         logging.info('Cast "%s" status updated (%s)' % (self._cast_name, str(new_status)))
 
         if self._trigger is not None:
-            self._trigger(new_status)
+            self._trigger(new_status.__dict__)
 
 
 class ChromecastDevice(PluginBase):
