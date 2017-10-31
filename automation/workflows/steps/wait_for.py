@@ -9,7 +9,7 @@ def get_available_settings():
 def execute(config, state, step_executed):
     event_name = run_python_code(config['event_name'], local_dict={'state': state})
 
-    def trigger(event_data):
+    def trigger(event_name, event_data):
         subscription['dispose']()
 
         step_executed(event_data)

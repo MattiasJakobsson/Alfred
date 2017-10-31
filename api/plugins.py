@@ -1,5 +1,5 @@
 from plugins.plugin_manager import get_available_plugins, execute_command, get_query_result, add_plugin, \
-    build_plugin_data, auto_detect_plugins
+    build_plugin_data, auto_detect_plugins, remove_plugin
 import json
 from data_access.database_manager import DatabaseManager
 
@@ -10,12 +10,14 @@ def bootstrap(application):
     plugin_query = PluginQuery()
     available_plugins = AvailablePlugins()
     auto_detect = AutoDetect()
+    remove = Remove()
 
     application.add_route('/plugins', plugin_list)
     application.add_route('/plugins/{plugin_id}/commands/{command}', plugin_command)
     application.add_route('/plugins/{plugin_id}/queries/{query}', plugin_query)
     application.add_route('/plugins/available', available_plugins)
     application.add_route('/plugins/autodetect', auto_detect)
+    application.add_route('/plugins/{plugin_id}/remove', remove)
 
 
 class AutoDetect:
@@ -79,3 +81,10 @@ class PluginQuery:
         result = get_query_result(int(plugin_id), query, parameters)
 
         resp.body = json.dumps(result)
+
+
+class Remove:
+    def on_post(self, req, resp, plugin_id):
+        remove_plugin(int(plugin_id))
+
+        resp.body = json.dumps({'success': True})

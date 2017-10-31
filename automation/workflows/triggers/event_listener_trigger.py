@@ -8,7 +8,7 @@ def get_available_settings():
 def set_up(workflow_id, data):
     event_name = data['subscribe_to']
 
-    def start_workflow(event_data):
+    def start_workflow(_, event_data):
         publish_event('new_workflow_instance_requested', {'workflow_id': workflow_id, 'initial_state': {
             'event_name': event_name,
             'data': event_data

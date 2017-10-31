@@ -72,7 +72,7 @@ def execute_workflow_step(workflow_id, step_id, data):
 
 
 def bootstrap():
-    def execute_next_step(data):
+    def execute_next_step(_, data):
         workflow_id = data['workflow_id']
         step_id = data['next_step']
 
@@ -81,7 +81,7 @@ def bootstrap():
         else:
             publish_event('workflow_finished', {'state': data['state']})
 
-    def start_workflow(data):
+    def start_workflow(_, data):
         workflow_id = data['workflow_id']
 
         workflow = get_workflow_definition(workflow_id)

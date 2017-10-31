@@ -95,6 +95,9 @@ class ChromecastDevice(PluginBase):
             else:
                 self._apply('cast_stopped_casting', {'name': name})
 
+    def get_status(self):
+        return self._get_cast().media_controller.status.__dict__
+
     def get_automations(self):
         return [{
             'definition': {'initial_step': {

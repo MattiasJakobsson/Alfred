@@ -2,6 +2,7 @@ import falcon
 from falcon_cors import CORS
 from .plugins import bootstrap as bootstrap_plugins
 from .automation import bootstrap as bootstrap_automations
+from .log import bootstrap as bootstrap_log
 
 
 def configure():
@@ -11,5 +12,6 @@ def configure():
 
     bootstrap_plugins(api)
     bootstrap_automations(api)
+    bootstrap_log(api)
 
     return api

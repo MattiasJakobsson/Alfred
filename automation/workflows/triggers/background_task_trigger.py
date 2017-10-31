@@ -40,7 +40,7 @@ def set_up(workflow_id, data):
 
     background_task.start()
 
-    def stop_task(_):
+    def stop_task(_, __):
         background_task.stop_task()
 
     subscription = subscribe('workflows_stopped', stop_task)
