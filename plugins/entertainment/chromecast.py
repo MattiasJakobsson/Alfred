@@ -86,9 +86,9 @@ class ChromecastDevice(PluginBase):
         is_playing = new_status.player_is_playing or new_status.player_is_paused
         name = self._get_setting('name')
 
-        logging.info('Chromecast "%s" updated playing status to %s' % (name, str(is_playing)))
-
         if is_playing != self._state['current_states']['is_playing']:
+            logging.info('Chromecast "%s" updated playing status to %s' % (name, str(is_playing)))
+
             if is_playing:
                 self._apply('cast_started_casting', {'name': name})
             else:
